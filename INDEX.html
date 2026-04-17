@@ -1,0 +1,1708 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KOFR FRN 금리계산기</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+KR:wght@300;400;500;700&display=swap');
+
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #21262d;
+    --border: #30363d;
+    --border2: #3d444d;
+    --accent: #00b4d8;
+    --accent2: #0077b6;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Noto Sans KR', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #161b22 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 24px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .header-icon {
+    width: 40px; height: 40px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .header-title { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .header-sub { font-size: 12px; color: var(--text2); margin-top: 2px; font-family: var(--mono); }
+  .badge {
+    margin-left: auto;
+    background: rgba(0,180,216,0.1);
+    border: 1px solid rgba(0,180,216,0.3);
+    color: var(--accent);
+    font-size: 11px; font-family: var(--mono);
+    padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* MAIN LAYOUT */
+  .main { padding: 24px 32px; max-width: 1400px; margin: 0 auto; }
+
+  /* PARAMS PANEL */
+  .params-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    align-items: end;
+  }
+  .param-group label {
+    display: block;
+    font-size: 11px; color: var(--text2);
+    font-family: var(--mono);
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+  .param-group input, .param-group select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    padding: 8px 12px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .param-group input:focus, .param-group select:focus {
+    border-color: var(--accent);
+  }
+  .param-group select option { background: var(--surface2); }
+
+  .calc-btn {
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 24px;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    width: 100%;
+    transition: opacity 0.15s, transform 0.1s;
+  }
+  .calc-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+  .calc-btn:active { transform: translateY(0); }
+
+  /* KOFR STATUS BAR */
+  .kofr-status {
+    display: flex; gap: 16px; margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+  .kofr-chip {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .kofr-chip .label { font-size: 11px; color: var(--text2); font-family: var(--mono); }
+  .kofr-chip .value { font-size: 16px; font-weight: 700; font-family: var(--mono); color: var(--accent); }
+  .kofr-chip .date { font-size: 11px; color: var(--text3); font-family: var(--mono); }
+
+  /* SECTION TITLE */
+  .section-title {
+    font-size: 13px; font-weight: 600;
+    color: var(--text2);
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .section-title::after {
+    content: ''; flex: 1; height: 1px;
+    background: var(--border);
+  }
+
+  /* RESULTS TABLE */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    background: var(--surface2);
+    padding: 10px 14px;
+    text-align: right;
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--text2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  th:first-child, th:nth-child(2), th:nth-child(3), th:nth-child(4) { text-align: center; }
+  td {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 13px;
+    text-align: right;
+  }
+  td:first-child { text-align: center; color: var(--text2); }
+  td:nth-child(2), td:nth-child(3), td:nth-child(4) { text-align: center; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(255,255,255,0.02); }
+
+  .rate-cell { color: var(--accent); font-weight: 500; }
+  .spread-cell { color: var(--green); font-weight: 600; }
+  .est-row td { color: var(--yellow) !important; opacity: 0.85; }
+  .est-badge {
+    font-size: 9px; color: var(--yellow);
+    border: 1px solid var(--yellow);
+    border-radius: 3px; padding: 1px 4px;
+    margin-left: 4px; opacity: 0.8;
+  }
+
+  /* DETAIL TABLE */
+  .detail-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+  .detail-header {
+    background: var(--surface2);
+    padding: 12px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    cursor: pointer;
+  }
+  .detail-header-title { font-size: 13px; font-weight: 600; font-family: var(--mono); }
+  .toggle-hint { font-size: 11px; color: var(--text2); }
+
+  .detail-controls {
+    padding: 12px 16px;
+    display: flex; gap: 8px; flex-wrap: wrap;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+  .period-btn {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .period-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .period-btn.active { background: rgba(0,180,216,0.15); border-color: var(--accent); color: var(--accent); }
+
+  .detail-table-wrap { overflow-x: auto; max-height: 400px; overflow-y: auto; }
+  .detail-table { width: 100%; border-collapse: collapse; }
+  .detail-table th {
+    position: sticky; top: 0; z-index: 2;
+    background: var(--surface2);
+    padding: 8px 12px;
+    text-align: right;
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text3);
+    border-bottom: 1px solid var(--border);
+  }
+  .detail-table th:first-child, .detail-table th:nth-child(2) { text-align: center; }
+  .detail-table td {
+    padding: 6px 12px;
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    font-family: var(--mono);
+    font-size: 12px;
+    text-align: right;
+  }
+  .detail-table td:first-child { text-align: center; color: var(--text2); }
+  .detail-table td:nth-child(2) { text-align: center; color: var(--text3); }
+  .detail-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .detail-table tr.est-row td { color: var(--yellow) !important; }
+
+  /* SUMMARY FOOTER */
+  .summary-bar {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 20px;
+    display: flex; gap: 32px; flex-wrap: wrap;
+    margin-bottom: 24px;
+  }
+  .summary-item .s-label { font-size: 10px; color: var(--text2); font-family: var(--mono); text-transform: uppercase; letter-spacing: 0.5px; }
+  .summary-item .s-value { font-size: 18px; font-weight: 700; font-family: var(--mono); margin-top: 2px; }
+  .s-value.accent { color: var(--accent); }
+  .s-value.green { color: var(--green); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text3);
+  }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.4; }
+  .empty-msg { font-size: 14px; }
+
+  /* FORMULA NOTE */
+  .formula-note {
+    background: rgba(0,180,216,0.05);
+    border: 1px solid rgba(0,180,216,0.2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text2);
+    margin-bottom: 16px;
+  }
+  .formula-note strong { color: var(--accent); }
+
+  /* ERROR */
+  .error-msg {
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 12px 16px;
+    color: var(--red);
+    font-size: 13px;
+    margin-bottom: 16px;
+  }
+
+
+  /* 데이터 업데이트 패널 */
+  .api-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+  .api-panel-header {
+    padding: 12px 20px;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    user-select: none;
+  }
+  .api-panel-header:hover { background: rgba(255,255,255,0.03); }
+  .api-panel-title { font-size: 12px; font-weight: 600; font-family: var(--mono); color: var(--text2); letter-spacing: 0.5px; text-transform: uppercase; }
+  .api-panel-body { padding: 16px 20px; display: none; }
+  .api-panel-body.open { display: block; }
+  .api-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .update-btn {
+    background: linear-gradient(135deg, #00b4d8, #0077b6);
+    color: white; border: none; border-radius: 6px;
+    padding: 8px 16px; font-size: 12px; font-weight: 600;
+    font-family: var(--sans); cursor: pointer;
+    transition: opacity 0.15s;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .update-btn:hover { opacity: 0.85; }
+  .update-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .update-status { font-size: 11px; font-family: var(--mono); padding: 4px 10px; border-radius: 4px; }
+  .update-status.ok   { background: rgba(63,185,80,0.12); color: var(--green); border: 1px solid rgba(63,185,80,0.3); }
+  .update-status.err  { background: rgba(248,81,73,0.12); color: var(--red);   border: 1px solid rgba(248,81,73,0.3); }
+  .update-status.info { background: rgba(0,180,216,0.1);  color: var(--accent); border: 1px solid rgba(0,180,216,0.25); }
+  .spinner { display: inline-block; width: 12px; height: 12px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; animation: spin 0.6s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .api-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .api-input-group label { display: block; font-size: 11px; color: var(--text3); font-family: var(--mono); margin-bottom: 5px; }
+  .api-input-group input {
+    width: 100%; background: var(--bg);
+    border: 1px solid var(--border2); border-radius: 6px;
+    color: var(--text); font-family: var(--mono); font-size: 12px;
+    padding: 7px 10px; outline: none; transition: border-color 0.15s;
+  }
+  .api-input-group input:focus { border-color: var(--accent); }
+  .api-input-group input::placeholder { color: var(--text3); }
+  .update-btn.secondary {
+    background: var(--surface2); border: 1px solid var(--border2); color: var(--text2);
+  }
+  .update-btn.secondary:hover { border-color: var(--accent); color: var(--accent); opacity: 1; }
+  .api-note { font-size: 11px; color: var(--text3); line-height: 1.6; margin-top: 10px; padding: 10px 12px; background: rgba(255,255,255,0.02); border-radius: 6px; border-left: 2px solid var(--border2); }
+  .api-note a { color: var(--accent); text-decoration: none; }
+  .api-note a:hover { text-decoration: underline; }
+
+
+  /* 탭 네비게이션 */
+  .tab-nav {
+    display: flex; gap: 0;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 24px;
+  }
+  .tab-btn {
+    background: none; border: none; cursor: pointer;
+    padding: 12px 24px; font-size: 13px; font-weight: 600;
+    font-family: var(--sans); color: var(--text2);
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* 금리 대시보드 */
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px; margin-bottom: 24px;
+  }
+  .rate-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    position: relative; overflow: hidden;
+    transition: border-color 0.15s;
+  }
+  .rate-card:hover { border-color: var(--border2); }
+  .rate-card-label {
+    font-size: 11px; color: var(--text2);
+    font-family: var(--mono); margin-bottom: 8px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .rate-card-value {
+    font-size: 24px; font-weight: 700;
+    font-family: var(--mono); color: var(--text);
+    margin-bottom: 4px;
+  }
+  .rate-card-value.highlight { color: var(--accent); }
+  .rate-card-value.green { color: var(--green); }
+  .rate-card-date {
+    font-size: 10px; color: var(--text3);
+    font-family: var(--mono);
+  }
+  .rate-card-change {
+    position: absolute; top: 14px; right: 14px;
+    font-size: 11px; font-family: var(--mono);
+    padding: 2px 7px; border-radius: 4px;
+  }
+  .rate-card-change.up   { color: var(--red);   background: rgba(248,81,73,0.1); }
+  .rate-card-change.down { color: var(--green);  background: rgba(63,185,80,0.1); }
+  .rate-card-change.flat { color: var(--text3); background: rgba(255,255,255,0.05); }
+  .rate-card-accent { position: absolute; bottom: 0; left: 0; right: 0; height: 3px; }
+
+  /* 금리 비교 테이블 */
+  .dash-section { margin-bottom: 24px; }
+  .dash-table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden;
+  }
+  .dash-table { width: 100%; border-collapse: collapse; }
+  .dash-table th {
+    background: var(--surface2); padding: 9px 14px;
+    font-size: 11px; font-family: var(--mono);
+    color: var(--text2); text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .dash-table th:last-child { text-align: right; }
+  .dash-table td {
+    padding: 10px 14px; font-size: 13px;
+    font-family: var(--mono); border-bottom: 1px solid var(--border);
+    color: var(--text);
+  }
+  .dash-table td:last-child { text-align: right; font-weight: 600; color: var(--accent); }
+  .dash-table tr:last-child td { border-bottom: none; }
+  .dash-table tr:hover td { background: rgba(255,255,255,0.02); }
+  .dash-table .kofr-row td { color: var(--accent); font-weight: 600; }
+
+  /* 스프레드 표시 */
+  .spread-positive { color: var(--red) !important; }
+  .spread-negative { color: var(--green) !important; }
+
+  /* 대시보드 상태 */
+  .dash-status {
+    font-size: 11px; color: var(--text3);
+    font-family: var(--mono); margin-bottom: 12px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .dash-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--text3);
+  }
+  .dash-dot.loading { background: var(--yellow); animation: pulse 1s infinite; }
+  .dash-dot.ok  { background: var(--green); }
+  .dash-dot.err { background: var(--red); }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+  .refresh-btn {
+    background: none; border: 1px solid var(--border2);
+    color: var(--text2); font-size: 11px; font-family: var(--mono);
+    padding: 4px 10px; border-radius: 4px; cursor: pointer;
+    transition: all 0.15s; margin-left: auto;
+  }
+  .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+
+  /* 차트 캔버스 */
+  #kofrChart { display:block; }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-icon">📊</div>
+  <div>
+    <div class="header-title">KOFR FRN 금리계산기</div>
+    <div class="header-sub">Lookback without Observation Shift · Compounded in Arrears · Act/365</div>
+  </div>
+  <div class="badge">v1.0 · 4차 협의회 Convention</div>
+</div>
+
+<div class="main">
+
+  <!-- 탭 네비게이션 -->
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('calc')">📊 금리계산기</button>
+    <button class="tab-btn" onclick="switchTab('chart')">📉 KOFR 추이 차트</button>
+    <button class="tab-btn" onclick="switchTab('dash')">📈 금리 대시보드</button>
+
+  </div>
+
+  <!-- 탭: 금리계산기 -->
+  <div id="tab-calc" class="tab-content active">
+
+  <!-- 데이터 업데이트 패널 -->
+  <div class="api-panel">
+    <div class="api-panel-header" onclick="toggleApiPanel()">
+      <span class="api-panel-title">🔄 &nbsp;데이터 업데이트 설정</span>
+      <span id="apiPanelArrow" style="font-size:12px;color:var(--text3);">▼ 펼치기</span>
+    </div>
+    <div class="api-panel-body" id="apiPanelBody">
+
+      <!-- GAS URL (1순위) -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);
+                    margin-bottom:8px;letter-spacing:0.3px;">
+          🤖 방법 1 — Google Apps Script 웹앱 URL <span style="color:var(--green);font-size:10px;">(자동 · 추천)</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <input type="text" id="gasUrl"
+            value="https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec"
+            placeholder="https://script.google.com/macros/s/XXXXX/exec"
+            style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
+                   color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;outline:none;">
+          <button class="update-btn" onclick="saveGasUrl()" style="white-space:nowrap;">저장</button>
+          <button class="update-btn" onclick="fetchFromGas()" style="white-space:nowrap;
+            background:linear-gradient(135deg,#3fb950,#238636);">지금 업데이트</button>
+        </div>
+        <div style="font-size:11px;color:var(--text3);margin-top:5px;">
+          저장 후 파일을 열 때마다 자동으로 최신 KOFR · 공휴일 반영
+        </div>
+      </div>
+
+      <!-- 구분선 -->
+      <div style="border-top:1px solid var(--border);margin:14px 0;position:relative;">
+        <span style="position:absolute;top:-9px;left:50%;transform:translateX(-50%);
+                     background:var(--surface);padding:0 10px;font-size:11px;color:var(--text3);">또는</span>
+      </div>
+
+      <!-- ECOS + 공휴일 API (2순위) -->
+      <div style="margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);
+                    margin-bottom:8px;letter-spacing:0.3px;">
+          🔑 방법 2 — ECOS / 공공데이터 API 키 직접 입력 <span style="color:var(--yellow);font-size:10px;">(영리 계정 필요)</span>
+        </div>
+        <div class="api-row">
+          <div class="api-input-group">
+            <label>한국은행 ECOS API 키 (KOFR 금리)</label>
+            <input type="password" id="ecosKey" placeholder="ecos.bok.or.kr — 영리 계정 필요">
+          </div>
+          <div class="api-input-group">
+            <label>공공데이터포털 API 키 (공휴일)</label>
+            <input type="password" id="holidayKey" placeholder="data.go.kr — 디코딩 키">
+          </div>
+        </div>
+        <div class="api-actions">
+          <button class="update-btn" id="btnUpdateKofr" onclick="updateKOFR()">KOFR 금리 업데이트</button>
+          <button class="update-btn" id="btnUpdateHoliday" onclick="updateHolidays()">공휴일 업데이트</button>
+          <button class="update-btn" id="btnUpdateAll" onclick="updateAll()">⚡ 전체 업데이트</button>
+          <button class="update-btn secondary" onclick="saveKeys()">키 저장</button>
+        </div>
+      </div>
+
+      <div class="api-actions" style="margin-top:8px;">
+        <span id="updateStatus" class="update-status info" style="display:none"></span>
+      </div>
+
+      <div class="api-note">
+        📌 <strong>방법 1 (GAS)</strong>: <a href="https://script.google.com" target="_blank">Google Apps Script</a>
+          웹앱 배포 후 URL 입력 — 파일 열릴 때 자동으로 최신 데이터 로드<br>
+        📌 <strong>방법 2 (ECOS)</strong>: <a href="https://ecos.bok.or.kr/api/" target="_blank">ecos.bok.or.kr/api</a>
+          에서 <strong>영리</strong> 계정으로 발급된 키 필요 (비영리 키는 StatisticSearch 미지원)<br>
+        📌 <strong>방법 2 (공휴일)</strong>: <a href="https://www.data.go.kr/data/15012690/openapi.do" target="_blank">data.go.kr</a>
+          한국천문연구원 특일정보 API — 디코딩 키 사용<br>
+        🔒 모든 키는 브라우저 로컬에만 저장되며 외부로 전송되지 않습니다
+      </div>
+    </div>
+  </div>
+
+  <!-- PARAMS -->
+  <div class="params-panel">
+    <div class="param-group">
+      <label>이자계산기간 시작일</label>
+      <input type="date" id="startDate" value="2025-01-31">
+    </div>
+    <div class="param-group">
+      <label>이자계산기간 종료일</label>
+      <input type="date" id="endDate" value="2026-01-31">
+    </div>
+    <div class="param-group">
+      <label>이자지급 주기</label>
+      <select id="freq">
+        <option value="1">1개월</option>
+        <option value="3">3개월</option>
+        <option value="6">6개월</option>
+        <option value="12">12개월</option>
+      </select>
+    </div>
+    <div class="param-group">
+      <label>스프레드 (가산금리, %)</label>
+      <input type="number" id="spread" value="0.200" step="0.001" min="0" max="5">
+    </div>
+    <div class="param-group">
+      <label>Lookback 영업일수</label>
+      <select id="lookback">
+        <option value="5" selected>5영업일 (Convention)</option>
+        <option value="3">3영업일</option>
+        <option value="2">2영업일</option>
+      </select>
+    </div>
+    <div class="param-group">
+      <label>&nbsp;</label>
+      <button class="calc-btn" onclick="calculate()">계산 실행</button>
+    </div>
+  </div>
+
+  <!-- KOFR STATUS -->
+  <div id="kofrStatus" class="kofr-status"></div>
+
+  <!-- ERROR -->
+  <div id="errorMsg" class="error-msg" style="display:none"></div>
+
+  <!-- FORMULA NOTE -->
+  <div class="formula-note">
+    <strong>계산수식</strong> ·
+    연환산 KOFR = { ∏(1 + KOFR<sub>t-5BD</sub> × n<sub>t</sub> / 365) − 1 } × 365 / Σn<sub>t</sub> &nbsp;|&nbsp;
+    이자지급처리: <strong>Following</strong> · 이자계산기간처리: <strong>Adjustment</strong>
+  </div>
+
+  <!-- SUMMARY -->
+  <div id="summaryBar" class="summary-bar" style="display:none"></div>
+
+  <!-- RESULTS TABLE -->
+  <div id="resultsSection" style="display:none">
+    <div class="section-title">회차별 계산결과</div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>회차</th>
+            <th>시작일</th>
+            <th>종료일</th>
+            <th>이자지급일</th>
+            <th>적용달력일수</th>
+            <th>복리평균금리</th>
+            <th>연환산 KOFR</th>
+            <th>연환산+스프레드</th>
+            <th>비고</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- DETAIL TABLE -->
+  <div id="detailSection" class="detail-wrap" style="display:none">
+    <div class="detail-header" onclick="toggleDetail()">
+      <span class="detail-header-title" id="detailTitle">▶ 계산세부내용</span>
+      <span class="toggle-hint" id="toggleHint">클릭하여 펼치기</span>
+    </div>
+    <div id="detailContent" style="display:none">
+      <div class="detail-controls" id="periodBtns"></div>
+      <div class="detail-table-wrap">
+        <table class="detail-table">
+          <thead>
+            <tr>
+              <th>①이자계산일 (t)</th>
+              <th>②관찰일 (t-5BD)</th>
+              <th>③KOFR (%)</th>
+              <th>④적용달력일수</th>
+              <th>⑤누적일수</th>
+              <th>⑥K_i = KOFR×n/365</th>
+              <th>⑦단일복리 (1+K_i)</th>
+              <th>⑧누적복리 ∏(1+K_i)</th>
+            </tr>
+          </thead>
+          <tbody id="detailBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /tab-calc -->
+
+  <!-- 탭: KOFR 추이 차트 -->
+  <div id="tab-chart" class="tab-content">
+
+    <div class="dash-status">
+      <div class="dash-dot" id="chartDot"></div>
+      <span id="chartStatusText">GAS URL 설정 후 조회 가능합니다</span>
+      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+        <select id="chartPeriod" onchange="renderChart()" style="
+          background:var(--surface2);border:1px solid var(--border2);
+          color:var(--text2);font-family:var(--mono);font-size:11px;
+          padding:3px 8px;border-radius:4px;outline:none;cursor:pointer;">
+          <option value="30">1개월</option>
+          <option value="90" selected>3개월</option>
+          <option value="180">6개월</option>
+          <option value="365">1년</option>
+          <option value="0">전체</option>
+        </select>
+        <button class="refresh-btn" onclick="loadChartData()">↻ 새로고침</button>
+      </div>
+    </div>
+
+    <!-- 차트 영역 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+      <canvas id="kofrChart" style="width:100%;height:320px;"></canvas>
+    </div>
+
+    <!-- 요약 통계 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
+      <div class="rate-card">
+        <div class="rate-card-label">기간 최고</div>
+        <div class="rate-card-value" id="chartMax" style="font-size:18px;">--</div>
+        <div class="rate-card-date" id="chartMaxDate">-</div>
+        <div class="rate-card-accent" style="background:var(--red)"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">기간 최저</div>
+        <div class="rate-card-value" id="chartMin" style="font-size:18px;">--</div>
+        <div class="rate-card-date" id="chartMinDate">-</div>
+        <div class="rate-card-accent" style="background:var(--green)"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">기간 평균</div>
+        <div class="rate-card-value" id="chartAvg" style="font-size:18px;">--</div>
+        <div class="rate-card-date" id="chartDays">-</div>
+        <div class="rate-card-accent" style="background:var(--accent)"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">전일 대비</div>
+        <div class="rate-card-value" id="chartChg" style="font-size:18px;">--</div>
+        <div class="rate-card-date" id="chartChgDate">-</div>
+        <div class="rate-card-accent" style="background:var(--yellow)"></div>
+      </div>
+    </div>
+
+    <!-- 최근 10일 테이블 -->
+    <div class="dash-section">
+      <div class="section-title">최근 KOFR 금리 내역</div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>날짜</th>
+              <th style="text-align:right;">KOFR (%)</th>
+              <th style="text-align:right;">전일 대비</th>
+            </tr>
+          </thead>
+          <tbody id="recentKofrBody">
+            <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px;">
+              데이터를 불러오는 중...
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-chart -->
+
+  <!-- 탭: 금리 대시보드 -->
+  <div id="tab-dash" class="tab-content">
+
+    <div class="dash-status">
+      <div class="dash-dot" id="dashDot"></div>
+      <span id="dashStatusText">ECOS API 키 설정 후 조회 가능합니다</span>
+      <button class="refresh-btn" onclick="loadDashboard()">↻ 새로고침</button>
+    </div>
+
+    <!-- 주요금리 카드 -->
+    <div class="dashboard-grid" id="rateCards">
+      <div class="rate-card">
+        <div class="rate-card-label">KOFR (공시RFR)</div>
+        <div class="rate-card-value highlight" id="dc-kofr">--</div>
+        <div class="rate-card-date" id="dd-kofr">-</div>
+        <div class="rate-card-accent" style="background:var(--accent)"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">한국은행 기준금리</div>
+        <div class="rate-card-value" id="dc-base">--</div>
+        <div class="rate-card-date" id="dd-base">-</div>
+        <div class="rate-card-accent" style="background:#6e7681"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">콜금리 (1일)</div>
+        <div class="rate-card-value" id="dc-call">--</div>
+        <div class="rate-card-date" id="dd-call">-</div>
+        <div class="rate-card-accent" style="background:#3fb950"></div>
+      </div>
+      <div class="rate-card">
+        <div class="rate-card-label">CD (91일)</div>
+        <div class="rate-card-value" id="dc-cd">--</div>
+        <div class="rate-card-date" id="dd-cd">-</div>
+        <div class="rate-card-accent" style="background:#d29922"></div>
+      </div>
+    </div>
+
+    <!-- 금리 비교 테이블 -->
+    <div class="dash-section">
+      <div class="section-title">주요 금리 현황 (vs KOFR 스프레드)</div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>금리 항목</th>
+              <th>최신일자</th>
+              <th>금리 (%)</th>
+              <th>vs KOFR 스프레드</th>
+            </tr>
+          </thead>
+          <tbody id="rateTableBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px;">
+              데이터를 불러오려면 ECOS API 키가 필요합니다
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 단기금융시장 금리 -->
+    <div class="dash-section">
+      <div class="section-title">단기금융시장 금리</div>
+      <div class="dash-table-wrap">
+        <table class="dash-table">
+          <thead>
+            <tr>
+              <th>금리 항목</th>
+              <th>최신일자</th>
+              <th>금리 (%)</th>
+              <th>vs KOFR 스프레드</th>
+            </tr>
+          </thead>
+          <tbody id="shortRateBody">
+            <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px;">
+              데이터를 불러오려면 ECOS API 키가 필요합니다
+            </td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div><!-- /tab-dash -->
+
+
+
+</div>
+
+<script>
+// ─── EMBEDDED DATA ────────────────────────────────────────────────────────────
+// KOFR 데이터: 2025-01-10 ~ 2026-04-03 (구 엑셀 + 25년6월물 엑셀 병합)
+// 미공시 구간 추정 로직: 예탁원 방식 = 조회시점 이후 → 최종 공시 KOFR 일괄 적용 (backward)
+const KOFR_DATA = {"2025-01-10":3.093,"2025-01-13":3.093,"2025-01-14":3.024,"2025-01-15":3.044,"2025-01-16":3.111,"2025-01-17":3.094,"2025-01-20":3.121,"2025-01-21":3.141,"2025-01-22":3.105,"2025-01-23":3.102,"2025-01-24":3.177,"2025-01-31":3.137,"2025-02-03":3.062,"2025-02-04":3.016,"2025-02-05":3.015,"2025-02-06":3.013,"2025-02-07":3.012,"2025-02-10":3.044,"2025-02-11":3.034,"2025-02-12":3.054,"2025-02-13":3.073,"2025-02-14":3.073,"2025-02-17":3.073,"2025-02-18":3.025,"2025-02-19":3.021,"2025-02-20":3.017,"2025-02-21":3.025,"2025-02-24":3.063,"2025-02-25":2.89,"2025-02-26":2.859,"2025-02-27":2.831,"2025-02-28":2.832,"2025-03-04":2.779,"2025-03-05":2.777,"2025-03-06":2.787,"2025-03-07":2.804,"2025-03-10":2.804,"2025-03-11":2.765,"2025-03-12":2.746,"2025-03-13":2.764,"2025-03-14":2.754,"2025-03-17":2.745,"2025-03-18":2.744,"2025-03-19":2.744,"2025-03-20":2.755,"2025-03-21":2.765,"2025-03-24":2.745,"2025-03-25":2.738,"2025-03-26":2.727,"2025-03-27":2.713,"2025-03-28":2.697,"2025-03-31":2.775,"2025-04-01":2.719,"2025-04-02":2.747,"2025-04-03":2.756,"2025-04-04":2.784,"2025-04-07":2.813,"2025-04-08":2.8,"2025-04-09":2.799,"2025-04-10":2.802,"2025-04-11":2.802,"2025-04-14":2.802,"2025-04-15":2.791,"2025-04-16":2.778,"2025-04-17":2.792,"2025-04-18":2.812,"2025-04-21":2.801,"2025-04-22":2.801,"2025-04-23":2.801,"2025-04-24":2.802,"2025-04-25":2.804,"2025-04-28":2.793,"2025-04-29":2.764,"2025-04-30":2.793,"2025-05-02":2.81,"2025-05-07":2.811,"2025-05-08":2.762,"2025-05-09":2.783,"2025-05-12":2.812,"2025-05-13":2.811,"2025-05-14":2.812,"2025-05-15":2.783,"2025-05-16":2.782,"2025-05-19":2.771,"2025-05-20":2.767,"2025-05-21":2.77,"2025-05-22":2.762,"2025-05-23":2.793,"2025-05-26":2.812,"2025-05-27":2.79,"2025-05-28":2.74,"2025-05-29":2.561,"2025-05-30":2.591,"2025-06-02":2.561,"2025-06-04":2.513,"2025-06-05":2.482,"2025-06-09":2.562,"2025-06-10":2.552,"2025-06-11":2.552,"2025-06-12":2.542,"2025-06-13":2.561,"2025-06-16":2.561,"2025-06-17":2.543,"2025-06-18":2.55,"2025-06-19":2.523,"2025-06-20":2.552,"2025-06-23":2.543,"2025-06-24":2.534,"2025-06-25":2.533,"2025-06-26":2.552,"2025-06-27":2.533,"2025-06-30":2.581,"2025-07-01":2.524,"2025-07-02":2.519,"2025-07-03":2.484,"2025-07-04":2.495,"2025-07-07":2.494,"2025-07-08":2.503,"2025-07-09":2.503,"2025-07-10":2.533,"2025-07-11":2.503,"2025-07-14":2.523,"2025-07-15":2.492,"2025-07-16":2.463,"2025-07-17":2.465,"2025-07-18":2.485,"2025-07-21":2.483,"2025-07-22":2.474,"2025-07-23":2.485,"2025-07-24":2.465,"2025-07-25":2.496,"2025-07-28":2.493,"2025-07-29":2.493,"2025-07-30":2.496,"2025-07-31":2.533,"2025-08-01":2.475,"2025-08-04":2.485,"2025-08-05":2.528,"2025-08-06":2.529,"2025-08-07":2.474,"2025-08-08":2.534,"2025-08-11":2.514,"2025-08-12":2.524,"2025-08-13":2.513,"2025-08-14":2.504,"2025-08-18":2.492,"2025-08-19":2.461,"2025-08-20":2.443,"2025-08-21":2.447,"2025-08-22":2.495,"2025-08-25":2.495,"2025-08-26":2.504,"2025-08-27":2.494,"2025-08-28":2.475,"2025-08-29":2.523,"2025-09-01":2.495,"2025-09-02":2.505,"2025-09-03":2.504,"2025-09-04":2.524,"2025-09-05":2.56,"2025-09-08":2.524,"2025-09-09":2.584,"2025-09-10":2.584,"2025-09-11":2.55,"2025-09-12":2.532,"2025-09-15":2.542,"2025-09-16":2.522,"2025-09-17":2.512,"2025-09-18":2.514,"2025-09-19":2.534,"2025-09-22":2.552,"2025-09-23":2.552,"2025-09-24":2.533,"2025-09-25":2.543,"2025-09-26":2.534,"2025-09-29":2.544,"2025-09-30":2.572,"2025-10-01":2.535,"2025-10-02":2.534,"2025-10-10":2.543,"2025-10-13":2.542,"2025-10-14":2.513,"2025-10-15":2.496,"2025-10-16":2.505,"2025-10-17":2.513,"2025-10-20":2.532,"2025-10-21":2.513,"2025-10-22":2.521,"2025-10-23":2.522,"2025-10-24":2.541,"2025-10-27":2.542,"2025-10-28":2.542,"2025-10-29":2.494,"2025-10-30":2.502,"2025-10-31":2.531,"2025-11-03":2.491,"2025-11-04":2.499,"2025-11-05":2.499,"2025-11-06":2.495,"2025-11-07":2.524,"2025-11-10":2.532,"2025-11-11":2.532,"2025-11-12":2.512,"2025-11-13":2.532,"2025-11-14":2.522,"2025-11-17":2.513,"2025-11-18":2.511,"2025-11-19":2.502,"2025-11-20":2.513,"2025-11-21":2.523,"2025-11-24":2.524,"2025-11-25":2.523,"2025-11-26":2.542,"2025-11-27":2.533,"2025-11-28":2.532,"2025-12-01":2.532,"2025-12-02":2.514,"2025-12-03":2.505,"2025-12-04":2.516,"2025-12-05":2.514,"2025-12-08":2.534,"2025-12-09":2.57,"2025-12-10":2.569,"2025-12-11":2.553,"2025-12-12":2.552,"2025-12-15":2.551,"2025-12-16":2.532,"2025-12-17":2.532,"2025-12-18":2.532,"2025-12-19":2.542,"2025-12-22":2.562,"2025-12-23":2.563,"2025-12-24":2.553,"2025-12-26":2.563,"2025-12-29":2.563,"2025-12-30":2.562,"2025-12-31":2.687,"2026-01-02":2.543,"2026-01-05":2.522,"2026-01-06":2.532,"2026-01-07":2.532,"2026-01-08":2.544,"2026-01-09":2.571,"2026-01-12":2.581,"2026-01-13":2.58,"2026-01-14":2.589,"2026-01-15":2.567,"2026-01-16":2.557,"2026-01-19":2.548,"2026-01-20":2.549,"2026-01-21":2.559,"2026-01-22":2.532,"2026-01-23":2.57,"2026-01-26":2.578,"2026-01-27":2.547,"2026-01-28":2.496,"2026-01-29":2.513,"2026-01-30":2.552,"2026-02-02":2.56,"2026-02-03":2.54,"2026-02-04":2.54,"2026-02-05":2.55,"2026-02-06":2.55,"2026-02-09":2.55,"2026-02-10":2.58,"2026-02-11":2.58,"2026-02-12":2.551,"2026-02-13":2.551,"2026-02-19":2.541,"2026-02-20":2.531,"2026-02-23":2.531,"2026-02-24":2.541,"2026-02-25":2.552,"2026-02-26":2.562,"2026-02-27":2.56,"2026-03-03":2.539,"2026-03-04":2.511,"2026-03-05":2.499,"2026-03-06":2.49,"2026-03-09":2.56,"2026-03-10":2.566,"2026-03-11":2.565,"2026-03-12":2.56,"2026-03-13":2.539,"2026-03-16":2.529,"2026-03-17":2.519,"2026-03-18":2.499,"2026-03-19":2.52,"2026-03-20":2.521,"2026-03-23":2.521,"2026-03-24":2.532,"2026-03-25":2.531,"2026-03-26":2.531,"2026-03-27":2.521,"2026-03-30":2.512,"2026-03-31":2.584,"2026-04-01":2.541,"2026-04-02":2.49,"2026-04-03":2.49};
+
+// 날짜순 정렬 키 목록 (backward search용)
+const KOFR_DATES = Object.keys(KOFR_DATA).sort();
+
+const HOLIDAYS = new Set(["2025-01-01","2025-01-27","2025-01-28","2025-01-29","2025-01-30","2025-03-03","2025-05-01","2025-05-05","2025-05-06","2025-06-03","2025-06-06","2025-08-15","2025-10-03","2025-10-06","2025-10-07","2025-10-08","2025-10-09","2025-12-25","2026-01-01","2026-02-16","2026-02-17","2026-02-18","2026-03-02","2026-05-01","2026-05-05","2026-05-25","2026-08-17","2026-09-24","2026-09-25","2026-10-09","2026-12-25"]);
+
+// ─── UTILITY ──────────────────────────────────────────────────────────────────
+function parseDate(s) {
+  const [y,m,d] = s.split('-').map(Number);
+  return new Date(Date.UTC(y, m-1, d));
+}
+function fmtDate(d) {
+  return d.toISOString().slice(0,10);
+}
+function addDays(d, n) {
+  const r = new Date(d); r.setUTCDate(r.getUTCDate() + n); return r;
+}
+function isBD(d) {
+  const dow = d.getUTCDay(); // 0=Sun, 6=Sat
+  if (dow === 0 || dow === 6) return false;
+  return !HOLIDAYS.has(fmtDate(d));
+}
+function prevBD(d, n) {
+  let count = 0, cur = new Date(d);
+  while (count < n) {
+    cur = addDays(cur, -1);
+    if (isBD(cur)) count++;
+  }
+  return cur;
+}
+function nextBD(d) {
+  let cur = addDays(d, 1);
+  while (!isBD(cur)) cur = addDays(cur, 1);
+  return cur;
+}
+function getKOFR(obsDate) {
+  // 예탁원 로직: 정확한 날짜 있으면 사용, 없으면 backward(이전 최근 공시 KOFR) 적용
+  const obsStr = fmtDate(obsDate);
+  if (KOFR_DATA[obsStr] !== undefined) return { rate: KOFR_DATA[obsStr], estimated: false };
+  // Backward search: 관찰일 이전 가장 최근 공시 KOFR 사용 (예탁원 방식)
+  let t = new Date(obsDate);
+  for (let i = 0; i < 60; i++) {
+    t = addDays(t, -1);
+    const ts = fmtDate(t);
+    if (KOFR_DATA[ts] !== undefined) return { rate: KOFR_DATA[ts], estimated: true };
+  }
+  return { rate: null, estimated: true };
+}
+
+// Following convention: move to next BD if holiday
+function followingBD(d) {
+  let cur = new Date(d);
+  while (!isBD(cur)) cur = addDays(cur, 1);
+  return cur;
+}
+
+// ─── SCHEDULE GENERATION ─────────────────────────────────────────────────────
+// 핵심 규칙:
+//   raw 지급일 = 발행일의 day 기준으로 n개월 후 (말일 초과시 말일)
+//   이자지급일 = following(raw 지급일)
+//   다음 회차 시작 = 이전 이자지급일 (following 적용 후)
+//   표시 종료일 = 이자지급일 - 1일
+
+function nthMonthDate(baseDate, n) {
+  // baseDate 기준 n개월 후
+  // EOM(End of Month) 규칙: 발행일이 해당 월 말일이면 → 항상 n개월 후 말일
+  let y = baseDate.getUTCFullYear();
+  let m = baseDate.getUTCMonth() + n;  // 0-based
+  while (m >= 12) { m -= 12; y++; }
+  while (m < 0)   { m += 12; y--; }
+  const maxDayBase = new Date(Date.UTC(baseDate.getUTCFullYear(), baseDate.getUTCMonth()+1, 0)).getUTCDate();
+  const isEOM = (baseDate.getUTCDate() === maxDayBase);  // 발행일이 월말일인지
+  const maxDayTarget = new Date(Date.UTC(y, m+1, 0)).getUTCDate();
+  const day = isEOM ? maxDayTarget : Math.min(baseDate.getUTCDate(), maxDayTarget);
+  return new Date(Date.UTC(y, m, day));
+}
+
+function buildSchedule(issueDate, maturityDate, freqMonths) {
+  const periods = [];
+  let prevPay = new Date(issueDate);  // 1회차 시작 = 발행일
+
+  for (let n = freqMonths; ; n += freqMonths) {
+    const rawEnd = nthMonthDate(issueDate, n);
+    if (rawEnd > maturityDate) break;  // 만기 초과시 중단
+
+    const payDate   = followingBD(rawEnd);
+    const displayEnd = addDays(payDate, -1);
+
+    periods.push({
+      start:      new Date(prevPay),
+      end:        payDate,          // 계산기간 exclusive end = 이자지급일
+      displayEnd,
+      rawEnd
+    });
+
+    prevPay = payDate;  // 다음 회차 시작 = 이번 이자지급일 (following 적용 후)
+
+    if (+rawEnd >= +maturityDate) break;
+  }
+  return periods;
+}
+
+// ─── PERIOD CALCULATION ───────────────────────────────────────────────────────
+function calcPeriod(startDate, payDate, lookback) {
+  let product = 1.0;
+  let totalN = 0;
+  const detail = [];
+  let isEstimated = false;
+
+  let cur = new Date(startDate);
+  while (cur < payDate) {
+    if (isBD(cur)) {
+      const obs = prevBD(cur, lookback);
+      const { rate, estimated } = getKOFR(obs);
+      if (estimated) isEstimated = true;
+
+      const nbd = nextBD(cur);
+      const pEnd = nbd < payDate ? nbd : payDate;
+      const n_i = Math.round((pEnd - cur) / 86400000);
+      totalN += n_i;
+
+      let K_i = 0;
+      if (rate !== null) {
+        K_i = (rate / 100) * n_i / 365;
+        product *= (1 + K_i);
+      }
+
+      detail.push({
+        calcDate: fmtDate(cur),
+        obsDate: fmtDate(obs),
+        kofr: rate,
+        n_i,
+        cumN: totalN,
+        K_i,
+        onePlusK: 1 + K_i,
+        cumProd: product,
+        estimated
+      });
+    }
+    cur = addDays(cur, 1);
+  }
+
+  const compound = product - 1;
+  const annualized = totalN > 0 ? compound * 365 / totalN : 0;
+  return { compound, annualized, totalN, detail, isEstimated };
+}
+
+// ─── MAIN CALCULATION ─────────────────────────────────────────────────────────
+let allResults = [];
+let allDetails = [];
+let currentDetailIdx = 0;
+
+function calculate() {
+  const startStr = document.getElementById('startDate').value;
+  const endStr = document.getElementById('endDate').value;
+  const freqMonths = parseInt(document.getElementById('freq').value);
+  const spreadPct = parseFloat(document.getElementById('spread').value);
+  const lookback = parseInt(document.getElementById('lookback').value);
+
+  const errEl = document.getElementById('errorMsg');
+  errEl.style.display = 'none';
+
+  if (!startStr || !endStr) { showError('날짜를 입력하세요.'); return; }
+
+  const startDate = parseDate(startStr);
+  const endDate = parseDate(endStr);
+
+  if (startDate >= endDate) { showError('종료일은 시작일보다 이후여야 합니다.'); return; }
+  if ((endDate - startDate) / 86400000 > 3653) { showError('이자계산기간이 너무 깁니다 (최대 10년).'); return; }
+
+  const schedule = buildSchedule(startDate, endDate, freqMonths);
+  if (schedule.length === 0) { showError('해당 파라미터로 생성되는 이자지급 회차가 없습니다.'); return; }
+  allResults = [];
+  allDetails = [];
+
+  for (let i = 0; i < schedule.length; i++) {
+    const { start, end: payDate, displayEnd } = schedule[i];
+    const res = calcPeriod(start, payDate, lookback);
+    const spread = spreadPct / 100;
+    allResults.push({
+      idx: i + 1,
+      start: fmtDate(start),
+      displayEnd: fmtDate(displayEnd),
+      payDate: fmtDate(payDate),
+      totalN: res.totalN,
+      compound: res.compound,
+      annualized: res.annualized,
+      annualizedSpread: res.annualized + spread,
+      isEstimated: res.isEstimated
+    });
+    allDetails.push(res.detail);
+  }
+
+  renderKofrStatus();
+  renderSummary(spreadPct);
+  renderResults();
+  renderDetailControls();
+  renderDetail(0);
+
+  document.getElementById('resultsSection').style.display = 'block';
+  document.getElementById('detailSection').style.display = 'block';
+  document.getElementById('summaryBar').style.display = 'flex';
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+
+// ─── RENDER ───────────────────────────────────────────────────────────────────
+function renderKofrStatus() {
+  const dates = Object.keys(KOFR_DATA).sort().reverse();
+  const latest = dates[0];
+  const latestRate = KOFR_DATA[latest];
+  const prev = dates[1];
+  const prevRate = KOFR_DATA[prev];
+  const diff = latestRate - prevRate;
+  const diffStr = (diff >= 0 ? '+' : '') + diff.toFixed(3);
+
+  document.getElementById('kofrStatus').innerHTML = `
+    <div class="kofr-chip">
+      <div>
+        <div class="label">최종 KOFR</div>
+        <div class="value">${latestRate.toFixed(3)}%</div>
+        <div class="date">${latest} 기준</div>
+      </div>
+      <div style="font-size:12px;color:${diff >= 0 ? 'var(--green)' : 'var(--red)'};">${diffStr}%</div>
+    </div>
+    <div class="kofr-chip">
+      <div>
+        <div class="label">데이터 기간</div>
+        <div class="value" style="font-size:13px;">${dates[dates.length-1]} ~ ${latest}</div>
+        <div class="date">${dates.length}개 영업일</div>
+      </div>
+    </div>
+    <div class="kofr-chip">
+      <div>
+        <div class="label">공휴일</div>
+        <div class="value" style="font-size:13px;">${HOLIDAYS.size}일</div>
+        <div class="date">Seoul 영업일 기준</div>
+      </div>
+    </div>
+  `;
+}
+
+function renderSummary(spreadPct) {
+  const totalPeriods = allResults.length;
+  const estCount = allResults.filter(r => r.isEstimated).length;
+  const avgAnn = allResults.reduce((s,r) => s+r.annualized, 0) / totalPeriods;
+  const avgSpread = avgAnn + spreadPct/100;
+
+  document.getElementById('summaryBar').innerHTML = `
+    <div class="summary-item">
+      <div class="s-label">이자지급 회차</div>
+      <div class="s-value accent">${totalPeriods}회</div>
+    </div>
+    <div class="summary-item">
+      <div class="s-label">평균 연환산 KOFR</div>
+      <div class="s-value accent">${(avgAnn*100).toFixed(3)}%</div>
+    </div>
+    <div class="summary-item">
+      <div class="s-label">평균 연환산+스프레드</div>
+      <div class="s-value green">${(avgSpread*100).toFixed(3)}%</div>
+    </div>
+    <div class="summary-item">
+      <div class="s-label">스프레드</div>
+      <div class="s-value" style="font-size:14px;color:var(--text2);">${spreadPct.toFixed(3)}%</div>
+    </div>
+    ${estCount > 0 ? `<div class="summary-item"><div class="s-label">추정 포함 회차</div><div class="s-value" style="font-size:14px;color:var(--yellow);">${estCount}회 ⚠</div></div>` : ''}
+  `;
+}
+
+function renderResults() {
+  const tbody = document.getElementById('resultsBody');
+  tbody.innerHTML = allResults.map(r => `
+    <tr class="${r.isEstimated ? 'est-row' : ''}">
+      <td>${r.idx}회차</td>
+      <td>${r.start}</td>
+      <td>${r.displayEnd}</td>
+      <td>${r.payDate}</td>
+      <td>${r.totalN}일</td>
+      <td class="rate-cell">${(r.compound*100).toFixed(3)}%</td>
+      <td class="rate-cell">${(r.annualized*100).toFixed(3)}%</td>
+      <td class="spread-cell">${(r.annualizedSpread*100).toFixed(3)}%</td>
+      <td style="text-align:left;font-size:11px;color:var(--text3);">${r.isEstimated ? '⚠ 추정포함' : '확정'}</td>
+    </tr>
+  `).join('');
+}
+
+function renderDetailControls() {
+  const btns = allResults.map((r, i) => `
+    <button class="period-btn ${i===0?'active':''}" onclick="renderDetail(${i})" id="pbtn-${i}">
+      ${r.idx}회차<br><span style="opacity:0.7;">${r.start.slice(5)}~</span>
+    </button>
+  `).join('');
+  document.getElementById('periodBtns').innerHTML = btns;
+}
+
+function renderDetail(idx) {
+  currentDetailIdx = idx;
+  document.querySelectorAll('.period-btn').forEach((b, i) => {
+    b.classList.toggle('active', i === idx);
+  });
+
+  const detail = allDetails[idx];
+  const res = allResults[idx];
+  document.getElementById('detailTitle').textContent =
+    `▶ 계산세부내용 · ${res.idx}회차 (${res.start} ~ ${res.displayEnd})`;
+
+  const tbody = document.getElementById('detailBody');
+  tbody.innerHTML = detail.map(d => `
+    <tr class="${d.estimated ? 'est-row' : ''}">
+      <td>${d.calcDate}</td>
+      <td>${d.obsDate}</td>
+      <td>${d.kofr !== null ? d.kofr.toFixed(3)+'%' : '-'}</td>
+      <td>${d.n_i}</td>
+      <td>${d.cumN}</td>
+      <td>${d.K_i.toFixed(12)}</td>
+      <td>${d.onePlusK.toFixed(10)}</td>
+      <td>${d.cumProd.toFixed(10)}</td>
+    </tr>
+  `).join('');
+}
+
+let detailOpen = false;
+function toggleDetail() {
+  detailOpen = !detailOpen;
+  document.getElementById('detailContent').style.display = detailOpen ? 'block' : 'none';
+  document.getElementById('toggleHint').textContent = detailOpen ? '클릭하여 접기' : '클릭하여 펼치기';
+}
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+
+// ─── 데이터 업데이트 ─────────────────────────────────────────────────────────
+
+function toggleApiPanel() {
+  const body  = document.getElementById('apiPanelBody');
+  const arrow = document.getElementById('apiPanelArrow');
+  const open  = body.classList.toggle('open');
+  arrow.textContent = open ? '▲ 접기' : '▼ 펼치기';
+}
+
+function showStatus(msg, type='info') {
+  const el = document.getElementById('updateStatus');
+  el.textContent = msg;
+  el.className = 'update-status ' + type;
+  el.style.display = 'inline-block';
+}
+
+function saveKeys() {
+  const ek = document.getElementById('ecosKey').value.trim();
+  const hk = document.getElementById('holidayKey').value.trim();
+  if (ek) localStorage.setItem('kofr_ecos_key', ek);
+  if (hk) localStorage.setItem('kofr_holiday_key', hk);
+  showStatus('✓ 키가 저장됐습니다.', 'ok');
+}
+
+function loadKeys() {
+  const ek = localStorage.getItem('kofr_ecos_key');
+  const hk = localStorage.getItem('kofr_holiday_key');
+  if (ek) document.getElementById('ecosKey').value = ek;
+  if (hk) document.getElementById('holidayKey').value = hk;
+}
+
+function setLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  if (!btn) return;
+  if (on) { btn._orig = btn.innerHTML; btn.innerHTML = '<span class="spinner"></span> 처리중...'; btn.disabled = true; }
+  else    { btn.innerHTML = btn._orig || btn.innerHTML; btn.disabled = false; }
+}
+
+// ── ECOS API → KOFR 금리 업데이트 ──
+async function updateKOFR() {
+  const key = document.getElementById('ecosKey').value.trim();
+  if (!key) { showStatus('ECOS API 키를 입력하세요.', 'err'); return; }
+
+  setLoading('btnUpdateKofr', true);
+  showStatus('KOFR 금리 조회 중...', 'info');
+
+  try {
+    const lastDate = KOFR_DATES[KOFR_DATES.length - 1].replace(/-/g,'');
+    const today    = fmtDate(new Date()).replace(/-/g,'');
+    const url = `https://ecos.bok.or.kr/api/StatisticSearch/${key}/json/kr/1/500/817Y002/D/${lastDate}/${today}/010901000`;
+
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    if (data.RESULT) throw new Error(data.RESULT.MESSAGE || '조회 실패 — ECOS 영리 계정 확인 필요');
+
+    const rows = data.StatisticSearch?.row;
+    if (!rows || rows.length === 0) { showStatus('새 KOFR 데이터 없음', 'info'); return; }
+
+    let added = 0;
+    rows.forEach(r => {
+      const t = r.TIME;
+      const d = `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)}`;
+      const v = parseFloat(r.DATA_VALUE);
+      if (!isNaN(v) && v > 0) { if (!KOFR_DATA[d]) added++; KOFR_DATA[d] = Math.round(v*1000)/1000; }
+    });
+    KOFR_DATES.length = 0;
+    Object.keys(KOFR_DATA).sort().forEach(d => KOFR_DATES.push(d));
+    showStatus(`✓ KOFR ${added}일치 추가 (최신: ${KOFR_DATES[KOFR_DATES.length-1]})`, 'ok');
+    renderKofrStatus();
+
+  } catch(e) { showStatus(`오류: ${e.message}`, 'err'); }
+  setLoading('btnUpdateKofr', false);
+}
+
+// ── 공공데이터 API → 공휴일 업데이트 ──
+async function updateHolidays() {
+  const key = document.getElementById('holidayKey').value.trim();
+  if (!key) { showStatus('공공데이터 API 키를 입력하세요.', 'err'); return; }
+
+  setLoading('btnUpdateHoliday', true);
+  showStatus('공휴일 조회 중...', 'info');
+
+  try {
+    const thisYear = new Date().getFullYear();
+    let added = 0;
+
+    for (const year of [thisYear, thisYear + 1]) {
+      const url = `https://apis.data.go.kr/B090041/openapi/service/SpcdeInfoService/getRestDeInfo` +
+                  `?serviceKey=${encodeURIComponent(key)}&solYear=${year}&numOfRows=50&_type=json`;
+      const resp  = await fetch(url);
+      const data  = await resp.json();
+      const items = data?.response?.body?.items?.item;
+      if (!items) continue;
+      const list  = Array.isArray(items) ? items : [items];
+      list.forEach(item => {
+        if (item.isHoliday === 'Y') {
+          const s = String(item.locdate);
+          const d = `${s.slice(0,4)}-${s.slice(4,6)}-${s.slice(6,8)}`;
+          if (!HOLIDAYS.has(d)) { HOLIDAYS.add(d); added++; }
+        }
+      });
+    }
+    showStatus(`✓ 공휴일 ${added}일 추가 (총 ${HOLIDAYS.size}일)`, 'ok');
+
+  } catch(e) { showStatus(`오류: ${e.message}`, 'err'); }
+  setLoading('btnUpdateHoliday', false);
+}
+
+async function updateAll() {
+  setLoading('btnUpdateAll', true);
+  await updateKOFR();
+  await updateHolidays();
+  setLoading('btnUpdateAll', false);
+  calculate();
+}
+
+// ─── GAS 연동 함수 ────────────────────────────────────────────────────────────
+
+function saveGasUrl() {
+  const url = document.getElementById('gasUrl').value.trim();
+  if (!url) { showStatus('GAS 웹앱 URL을 입력하세요.', 'err'); return; }
+  if (!url.startsWith('https://script.google.com')) {
+    showStatus('올바른 GAS URL이 아닙니다.', 'err'); return;
+  }
+  localStorage.setItem('kofr_gas_url', url);
+  showStatus('✓ URL이 저장됐습니다. 다음번 파일 열 때부터 자동 업데이트됩니다.', 'ok');
+}
+
+function loadGasUrl() {
+  const url = localStorage.getItem('kofr_gas_url');
+  if (url) document.getElementById('gasUrl').value = url;
+  return url;
+}
+
+async function fetchFromGas(silent = false) {
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const url = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+  if (!url) {
+    if (!silent) showStatus('GAS 웹앱 URL을 먼저 저장하세요.', 'err');
+    return false;
+  }
+
+  if (!silent) showStatus('⏳ GAS에서 최신 데이터 불러오는 중...', 'info');
+
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const data = await resp.json();
+
+    let kofrAdded = 0, holAdded = 0;
+
+    // KOFR 금리 병합
+    if (data.kofr) {
+      Object.entries(data.kofr).forEach(([d, rate]) => {
+        if (rate > 0) {
+          if (!KOFR_DATA[d]) kofrAdded++;
+          KOFR_DATA[d] = rate;
+        }
+      });
+      // KOFR_DATES 재정렬
+      KOFR_DATES.length = 0;
+      Object.keys(KOFR_DATA).sort().forEach(d => KOFR_DATES.push(d));
+    }
+
+    // 공휴일 병합
+    if (data.holidays) {
+      data.holidays.forEach(d => {
+        if (!HOLIDAYS.has(d)) { HOLIDAYS.add(d); holAdded++; }
+      });
+    }
+
+    const latest = KOFR_DATES[KOFR_DATES.length - 1];
+    const msg = `✓ 자동 업데이트 완료 — KOFR 최신: ${latest}, 공휴일 ${holAdded}일 추가`;
+    showStatus(msg, 'ok');
+
+    // 패널 열기
+    document.getElementById('apiPanelBody').classList.add('open');
+    document.getElementById('apiPanelArrow').textContent = '▲ 접기';
+
+    renderKofrStatus();
+    return true;
+
+  } catch(e) {
+    if (!silent) showStatus(`GAS 오류: ${e.message}`, 'err');
+    console.error('GAS fetch error:', e);
+    return false;
+  }
+}
+
+// ─── 시작 ─────────────────────────────────────────────────────────────────────
+// ─── 탭 전환 ──────────────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  event.target.classList.add('active');
+  if (tab === 'dash')   loadDashboard();
+  if (tab === 'chart')  loadChartData();
+
+}
+
+// ─── KOFR 추이 차트 ──────────────────────────────────────────────────────────
+
+let kofrChartInstance = null;
+let chartAllData = [];  // 전체 KOFR 데이터 (날짜순)
+
+function setChartStatus(state, msg) {
+  const dot  = document.getElementById('chartDot');
+  const text = document.getElementById('chartStatusText');
+  if (dot)  dot.className  = 'dash-dot ' + state;
+  if (text) text.textContent = msg;
+}
+
+async function loadChartData() {
+  setChartStatus('loading', '데이터 로드 중...');
+
+  // 내장 KOFR 데이터 + GAS 데이터 통합
+  chartAllData = KOFR_DATES.map(d => ({
+    date: d,
+    value: KOFR_DATA[d]
+  })).filter(d => d.value > 0);
+
+  if (chartAllData.length === 0) {
+    setChartStatus('err', '데이터가 없습니다.');
+    return;
+  }
+
+  setChartStatus('ok', `${chartAllData.length}일 데이터 로드 완료`);
+  renderChart();
+  renderRecentTable();
+}
+
+function renderChart() {
+  const days    = parseInt(document.getElementById('chartPeriod').value);
+  let filtered  = days === 0
+    ? chartAllData
+    : chartAllData.slice(-days);
+
+  if (filtered.length === 0) return;
+
+  const labels = filtered.map(d => d.date);
+  const values = filtered.map(d => d.value);
+
+  // 기존 차트 제거
+  if (kofrChartInstance) {
+    kofrChartInstance.destroy();
+    kofrChartInstance = null;
+  }
+
+  const canvas = document.getElementById('kofrChart');
+  canvas.height = 320;
+
+  const ctx = canvas.getContext('2d');
+
+  // 그라디언트
+  const grad = ctx.createLinearGradient(0, 0, 0, 320);
+  grad.addColorStop(0, 'rgba(0,180,216,0.25)');
+  grad.addColorStop(1, 'rgba(0,180,216,0.01)');
+
+  kofrChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: 'KOFR (%)',
+        data: values,
+        borderColor: '#00b4d8',
+        backgroundColor: grad,
+        borderWidth: 1.5,
+        pointRadius: filtered.length > 100 ? 0 : 2,
+        pointHoverRadius: 5,
+        pointBackgroundColor: '#00b4d8',
+        fill: true,
+        tension: 0.3,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161b22',
+          borderColor: '#30363d',
+          borderWidth: 1,
+          titleColor: '#8b949e',
+          bodyColor: '#e6edf3',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont:  { family: 'IBM Plex Mono', size: 13 },
+          callbacks: {
+            title: items => items[0].label,
+            label: item  => ` KOFR: ${item.raw.toFixed(3)}%`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:  { color: 'rgba(48,54,61,0.5)', drawBorder: false },
+          ticks: {
+            color: '#6e7681',
+            font: { family: 'IBM Plex Mono', size: 10 },
+            maxTicksLimit: 8,
+            maxRotation: 0,
+          }
+        },
+        y: {
+          grid:  { color: 'rgba(48,54,61,0.5)', drawBorder: false },
+          ticks: {
+            color: '#6e7681',
+            font: { family: 'IBM Plex Mono', size: 10 },
+            callback: v => v.toFixed(2) + '%'
+          },
+          suggestedMin: Math.min(...values) - 0.05,
+          suggestedMax: Math.max(...values) + 0.05,
+        }
+      }
+    }
+  });
+
+  // 요약 통계 업데이트
+  const maxV = Math.max(...values);
+  const minV = Math.min(...values);
+  const avgV = values.reduce((a,b)=>a+b,0)/values.length;
+  const maxIdx = values.indexOf(maxV);
+  const minIdx = values.indexOf(minV);
+  const lastV  = values[values.length-1];
+  const prevV  = values.length > 1 ? values[values.length-2] : lastV;
+  const chg    = lastV - prevV;
+
+  document.getElementById('chartMax').textContent = maxV.toFixed(3) + '%';
+  document.getElementById('chartMaxDate').textContent = labels[maxIdx];
+  document.getElementById('chartMin').textContent = minV.toFixed(3) + '%';
+  document.getElementById('chartMinDate').textContent = labels[minIdx];
+  document.getElementById('chartAvg').textContent = avgV.toFixed(3) + '%';
+  document.getElementById('chartDays').textContent = `${filtered.length}일 기준`;
+
+  const chgEl = document.getElementById('chartChg');
+  chgEl.textContent = (chg >= 0 ? '+' : '') + chg.toFixed(3) + '%p';
+  chgEl.style.color = chg > 0 ? 'var(--red)' : chg < 0 ? 'var(--green)' : 'var(--text2)';
+  document.getElementById('chartChgDate').textContent = labels[labels.length-1];
+}
+
+function renderRecentTable() {
+  const recent = chartAllData.slice(-15).reverse();
+  const tbody  = document.getElementById('recentKofrBody');
+  if (!tbody) return;
+
+  tbody.innerHTML = recent.map((d, i) => {
+    const prev = recent[i+1];
+    const chg  = prev ? d.value - prev.value : 0;
+    const chgStr = i < recent.length-1
+      ? `<span style="color:${chg > 0.0005 ? 'var(--red)' : chg < -0.0005 ? 'var(--green)' : 'var(--text3)'}">
+           ${chg >= 0 ? '+' : ''}${chg.toFixed(3)}%p
+         </span>`
+      : '<span style="color:var(--text3)">-</span>';
+    return `<tr>
+      <td style="text-align:left;">${d.date}</td>
+      <td style="text-align:right;">${d.value.toFixed(3)}%</td>
+      <td style="text-align:right;">${chgStr}</td>
+    </tr>`;
+  }).join('');
+}
+
+
+// ─── 금리 대시보드 ────────────────────────────────────────────────────────────
+const DASH_ITEMS = [
+  { id: 'kofr',  label: 'KOFR(공시RFR)',   stat: '817Y002', item: '010901000', cycle: 'D', cardId: 'dc-kofr', dateId: 'dd-kofr' },
+  { id: 'call',  label: '콜금리(1일)',       stat: '817Y002', item: '010101000', cycle: 'D', cardId: 'dc-call', dateId: 'dd-call' },
+  { id: 'cd',    label: 'CD(91일)',         stat: '817Y002', item: '010502000', cycle: 'D', cardId: 'dc-cd',   dateId: 'dd-cd'   },
+  { id: 'cp',    label: 'CP(91일)',         stat: '817Y002', item: '010503000', cycle: 'D' },
+  { id: 'gb1',   label: '국고채(1년)',       stat: '817Y002', item: '010190000', cycle: 'D' },
+  { id: 'gb3',   label: '국고채(3년)',       stat: '817Y002', item: '010200000', cycle: 'D' },
+  { id: 'gb5',   label: '국고채(5년)',       stat: '817Y002', item: '010200001', cycle: 'D' },
+  { id: 'cb',    label: '회사채(3년,AA-)',   stat: '817Y002', item: '010300000', cycle: 'D' },
+  { id: 'base',  label: '한국은행 기준금리', stat: '722Y001', item: '0101000',   cycle: 'M', cardId: 'dc-base', dateId: 'dd-base' },
+];
+
+let dashData = {};
+
+function setDashStatus(state, msg) {
+  const dot  = document.getElementById('dashDot');
+  const text = document.getElementById('dashStatusText');
+  dot.className  = 'dash-dot ' + state;
+  text.textContent = msg;
+}
+
+// fetchEcosItem 제거 — GAS 서버사이드로 대체
+
+function fmtTime(t) {
+  if (!t) return '-';
+  if (t.length === 6) return `${t.slice(0,4)}-${t.slice(4,6)}`;
+  return `${t.slice(0,4)}-${t.slice(4,6)}-${t.slice(6,8)}`;
+}
+
+function spreadClass(v) {
+  if (v > 0.005) return 'spread-positive';
+  if (v < -0.005) return 'spread-negative';
+  return '';
+}
+
+async function loadDashboard() {
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+
+  if (!gasUrl) {
+    setDashStatus('err', 'GAS 웹앱 URL이 설정되지 않았습니다. 업데이트 패널에서 URL을 저장하세요.');
+    return;
+  }
+
+  setDashStatus('loading', 'GAS를 통해 금리 데이터 조회 중...');
+  dashData = {};
+
+  try {
+    // GAS 웹앱에 대시보드 데이터 요청 (서버사이드로 ECOS 호출)
+    const resp = await fetch(gasUrl + '?action=dashboard');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+
+    if (!json.dashboard) throw new Error('대시보드 데이터 없음');
+
+    // DASH_ITEMS 레이블 매핑
+    const labelMap = {};
+    DASH_ITEMS.forEach(i => labelMap[i.id] = i.label);
+
+    Object.entries(json.dashboard).forEach(([id, d]) => {
+      dashData[id] = { ...d, label: labelMap[id] || id };
+    });
+
+  } catch(e) {
+    setDashStatus('err', `오류: ${e.message}`);
+    return;
+  }
+
+  const kofr = dashData['kofr']?.value;
+
+  // 카드 업데이트
+  DASH_ITEMS.filter(i => i.cardId).forEach(item => {
+    const d = dashData[item.id];
+    const cardEl = document.getElementById(item.cardId);
+    const dateEl = document.getElementById(item.dateId);
+    if (d && cardEl) {
+      cardEl.textContent = d.value.toFixed(3) + '%';
+      dateEl.textContent = fmtTime(d.time);
+    }
+  });
+
+  // 주요금리 테이블
+  const bondItems = ['base','kofr','call','cd','cp'];
+  document.getElementById('rateTableBody').innerHTML = bondItems.map(id => {
+    const d = dashData[id];
+    const label = DASH_ITEMS.find(i => i.id === id)?.label || id;
+    if (!d) return `<tr><td>${label}</td><td colspan="3" style="color:var(--text3)">조회 실패</td></tr>`;
+    const spd    = kofr != null ? (d.value - kofr) : null;
+    const spdStr = spd != null
+      ? `<span class="${spreadClass(spd)}">${spd >= 0 ? '+' : ''}${spd.toFixed(3)}%p</span>` : '-';
+    const isKofr = id === 'kofr';
+    return `<tr class="${isKofr ? 'kofr-row' : ''}">
+      <td>${label}${isKofr ? ' ★' : ''}</td>
+      <td>${fmtTime(d.time)}</td>
+      <td>${d.value.toFixed(3)}%</td>
+      <td>${isKofr ? '<span style="color:var(--text3)">기준</span>' : spdStr}</td>
+    </tr>`;
+  }).join('');
+
+  // 채권금리 테이블
+  const mktItems = ['gb1','gb3','gb5','cb'];
+  document.getElementById('shortRateBody').innerHTML = mktItems.map(id => {
+    const d = dashData[id];
+    const label = DASH_ITEMS.find(i => i.id === id)?.label || id;
+    if (!d) return `<tr><td>${label}</td><td colspan="3" style="color:var(--text3)">조회 실패</td></tr>`;
+    const spd    = kofr != null ? (d.value - kofr) : null;
+    const spdStr = spd != null
+      ? `<span class="${spreadClass(spd)}">${spd >= 0 ? '+' : ''}${spd.toFixed(3)}%p</span>` : '-';
+    return `<tr>
+      <td>${label}</td>
+      <td>${fmtTime(d.time)}</td>
+      <td>${d.value.toFixed(3)}%</td>
+      <td>${spdStr}</td>
+    </tr>`;
+  }).join('');
+
+  // fetchEcosItem 함수 더 이상 불필요 (GAS 경유)
+  const count = Object.keys(dashData).length;
+  setDashStatus('ok', `${count}개 항목 조회 완료 · ${fmtDate(new Date())} 기준`);
+}
+
+window.addEventListener('load', async () => {
+  loadKeys();
+  // GAS URL 로컬 저장 시도 (차단돼도 기본값으로 동작)
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  try {
+    if (!localStorage.getItem('kofr_gas_url')) {
+      localStorage.setItem('kofr_gas_url', GAS_URL_DEFAULT);
+    }
+  } catch(e) {}
+  loadGasUrl();
+
+  // GAS URL 자동 최신 데이터 로드
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+  if (gasUrl) {
+    const ok = await fetchFromGas(true); // silent 모드
+    if (ok) {
+      // 성공 시 계산 실행
+      renderKofrStatus();
+      calculate();
+      return;
+    }
+  }
+
+  // GAS 없거나 실패 시 내장 데이터로 계산
+  renderKofrStatus();
+  calculate();
+});
+</script>
+</body>
+</html>
