@@ -2941,6 +2941,25 @@ function computePrediction(forecast) {
     usdkrw:  forecast.prev_usdkrw  !== undefined ? Math.round(latestUsdkrw - forecast.prev_usdkrw) : null,
   };
 
+  // ── 기준금리/CD/국고채 예측값 계산 ──────────────────────────
+  // 기준금리 예측: KOFR와 동일한 인상 기대 횟수 기반
+  const p3m_base  = Math.max(1.0, Math.round((latestBase  + exp3m  * STEP) * 100)/100);
+  const p6m_base  = Math.max(1.0, Math.round((latestBase  + exp6m  * STEP) * 100)/100);
+  const p12m_base = Math.max(1.0, Math.round((latestBase  + exp12m * STEP) * 100)/100);
+
+  // CD 예측: 기준금리 예측 + 현재 CD-기준금리 스프레드 유지
+  const cd_spread = latestCd - latestBase;
+  const p3m_cd    = Math.max(1.0, Math.round((p3m_base  + cd_spread) * 100)/100);
+  const p6m_cd    = Math.max(1.0, Math.round((p6m_base  + cd_spread) * 100)/100);
+  const p12m_cd   = Math.max(1.0, Math.round((p12m_base + cd_spread) * 100)/100);
+
+  // 국고채3년 예측: 기준금리 예측 + 스프레드 정상화 (100bp→27.5bp로 수렴)
+  const gb3_cur_spread = latestGb3 - latestBase;   // 현재 스프레드
+  const gb3_norm_spread = 0.275;                    // 정상 스프레드 27.5bp
+  const p3m_gb3  = Math.max(1.0, Math.round((p3m_base  + gb3_cur_spread * 0.8 + gb3_norm_spread * 0.2) * 100)/100);
+  const p6m_gb3  = Math.max(1.0, Math.round((p6m_base  + gb3_cur_spread * 0.6 + gb3_norm_spread * 0.4) * 100)/100);
+  const p12m_gb3 = Math.max(1.0, Math.round((p12m_base + gb3_cur_spread * 0.3 + gb3_norm_spread * 0.7) * 100)/100);
+
   return {
     latestKofr, latestBase, latestCd, latestGb3, latestGb5, latestGb10,
     latestUsBase, latestKrCpi, latestWti, latestUsdkrw,
@@ -2948,6 +2967,9 @@ function computePrediction(forecast) {
     spreadAdj: Math.round(spreadAdj*10000)/10000,
     prevMonthChg,
     p3m, p6m, p12m,
+    p3m_base, p6m_base, p12m_base,
+    p3m_cd,   p6m_cd,   p12m_cd,
+    p3m_gb3,  p6m_gb3,  p12m_gb3,
     direction,
     spreadToBase: Math.round(spread*100)/100,
     sp_gb3_base:  Math.round((latestGb3  - latestBase)*100)/100,
@@ -3447,14 +3469,52 @@ function renderForecastChart(forecast, pred) {
         { label:'기준금리',   data:[...alignSeries(base_),null,null,null], borderColor:'#f85149', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
         { label:'CD(91일)',   data:[...alignSeries(cd),null,null,null],    borderColor:'#d29922', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
         { label:'국고채(3년)',data:[...alignSeries(gb3),null,null,null],   borderColor:'#3fb950', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
-        { label:'KOFR 예측', data:predData, borderColor:'#00b4d8', borderWidth:2, borderDash:[6,4], pointRadius:predRadius, pointBackgroundColor:'#00b4d8', tension:0.3, fill:false },
+        // KOFR 예측 (범례 숨김, 그래프에만 표시)
+        { label:'KOFR 예측', data:predData, borderColor:'#00b4d8', borderWidth:2, borderDash:[6,4], pointRadius:predRadius, pointBackgroundColor:'#00b4d8', tension:0.3, fill:false, hidden:false },
+        // 기준금리 예측 (초기 숨김, 범례 클릭으로 토글)
+        { label:'기준금리 예측', data:[...Array(allLabels.length-1).fill(null), pred.latestBase, pred.p3m_base, pred.p6m_base, pred.p12m_base],
+          borderColor:'#f85149', borderWidth:1.5, borderDash:[4,4], pointRadius:[...Array(allLabels.length-1).fill(0),0,4,4,4],
+          pointBackgroundColor:'#f85149', tension:0.3, fill:false, hidden:true },
+        // CD 예측 (초기 숨김)
+        { label:'CD 예측', data:[...Array(allLabels.length-1).fill(null), pred.latestCd, pred.p3m_cd, pred.p6m_cd, pred.p12m_cd],
+          borderColor:'#d29922', borderWidth:1.5, borderDash:[4,4], pointRadius:[...Array(allLabels.length-1).fill(0),0,4,4,4],
+          pointBackgroundColor:'#d29922', tension:0.3, fill:false, hidden:true },
+        // 국고채3년 예측 (초기 숨김)
+        { label:'국고채 예측', data:[...Array(allLabels.length-1).fill(null), pred.latestGb3, pred.p3m_gb3, pred.p6m_gb3, pred.p12m_gb3],
+          borderColor:'#3fb950', borderWidth:1.5, borderDash:[4,4], pointRadius:[...Array(allLabels.length-1).fill(0),0,4,4,4],
+          pointBackgroundColor:'#3fb950', tension:0.3, fill:false, hidden:true },
       ]
     },
     options: {
       responsive:true, maintainAspectRatio:false,
       interaction:{ mode:'index', intersect:false },
       plugins:{
-        legend:{ labels:{ color:'#8b949e', font:{ family:'IBM Plex Mono', size:11 }, boxWidth:20 } },
+        legend:{
+          labels:{ color:'#8b949e', font:{ family:'IBM Plex Mono', size:11 }, boxWidth:20,
+            // KOFR 예측/기준금리 예측/CD 예측/국고채 예측은 범례에서 숨김
+            filter: (item) => !item.text.includes('예측')
+          },
+          onClick: (e, legendItem, legend) => {
+            const chart = legend.chart;
+            const idx   = legendItem.datasetIndex;
+            const label = legendItem.text;
+            // 실선 토글 시 대응 예측선도 함께 토글
+            const predMap = { '기준금리':'기준금리 예측', 'CD(91일)':'CD 예측', '국고채(3년)':'국고채 예측', 'KOFR':'KOFR 예측' };
+            const predLabel = predMap[label];
+            // 기본 토글
+            const meta = chart.getDatasetMeta(idx);
+            meta.hidden = meta.hidden === null ? !chart.data.datasets[idx].hidden : null;
+            // 예측선도 같이 토글
+            if (predLabel) {
+              const predIdx = chart.data.datasets.findIndex(d => d.label === predLabel);
+              if (predIdx >= 0) {
+                const predMeta = chart.getDatasetMeta(predIdx);
+                predMeta.hidden = meta.hidden;
+              }
+            }
+            chart.update();
+          }
+        },
         tooltip:{ backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1, titleColor:'#e6edf3', bodyColor:'#8b949e',
           callbacks:{ label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y!==null?ctx.parsed.y.toFixed(2)+'%':'-'}` } }
       },
