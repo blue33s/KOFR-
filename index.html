@@ -1236,8 +1236,30 @@
 
     <!-- 조달 전략 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
-      <div style="font-size:13px;color:var(--text);font-weight:700;margin-bottom:4px;">💡 조달 전략 제안</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div style="font-size:13px;color:var(--text);font-weight:700;">💡 조달 전략 제안</div>
+        <button onclick="runClaudeAnalysis()" id="claudeBtn"
+          style="background:linear-gradient(135deg,#7c3aed,#4f46e5);border:none;color:#fff;
+          padding:6px 16px;border-radius:6px;font-size:11px;cursor:pointer;font-family:var(--mono);
+          display:flex;align-items:center;gap:6px;">
+          🧠 AI 심층 분석
+        </button>
+      </div>
       <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:16px;" id="fc-proc-basis">근거 로드 중...</div>
+      <!-- Claude AI 분석 결과 -->
+      <div id="claude-analysis-area" style="display:none;margin-bottom:16px;">
+        <div style="background:linear-gradient(135deg,rgba(124,58,237,0.1),rgba(79,70,229,0.1));
+          border:1px solid rgba(124,58,237,0.3);border-radius:10px;padding:16px;">
+          <div style="font-size:11px;color:#a78bfa;font-family:var(--mono);font-weight:600;margin-bottom:10px;">
+            🧠 Claude AI 분석 (웹검색 반영)
+            <span id="claude-analysis-time" style="font-weight:400;margin-left:8px;color:var(--text3);"></span>
+          </div>
+          <div id="claude-market-summary" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(124,58,237,0.2);"></div>
+          <div id="claude-kofr-strategy" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(124,58,237,0.2);"></div>
+          <div id="claude-procurement" style="font-size:12px;color:var(--text2);line-height:1.7;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(124,58,237,0.2);"></div>
+          <div id="claude-risk" style="font-size:12px;color:#f85149;line-height:1.7;"></div>
+        </div>
+      </div>
       <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
         <div style="background:var(--surface2);border-radius:8px;padding:16px;border-left:3px solid var(--accent);">
           <div style="font-size:11px;color:var(--accent);font-family:var(--mono);font-weight:600;margin-bottom:8px;">⏱ 만기 전략</div>
@@ -3586,6 +3608,109 @@ function setForecastStatus(state, msg) {
   const text = document.getElementById('fcStatusText');
   if (dot)  dot.className  = 'dash-dot ' + state;
   if (text) text.textContent = msg;
+}
+
+// ── Claude AI 심층 분석 ──────────────────────────────────────────
+async function runClaudeAnalysis() {
+  if (!forecastPred) { alert('데이터 로딩 후 시도해주세요.'); return; }
+
+  const btn = document.getElementById('claudeBtn');
+  if (btn) { btn.textContent = '⏳ 분석 중...'; btn.disabled = true; }
+
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (() => { try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+
+  // 현재 룰베이스 점수 가져오기
+  const scoreEl = document.getElementById('fc-total-score');
+  const totalScore = scoreEl ? parseFloat(scoreEl.textContent) : 0;
+  const dirEl = document.getElementById('fc-direction');
+  const direction = dirEl ? dirEl.textContent : '';
+
+  const pred = forecastPred;
+  const sp3bp = Math.round(pred.sp_gb3_base * 100);
+  const spreadAdj = pred.spreadAdj || 0;
+  const NORMAL_SPREAD = 27.5;
+  const HIKE_UNIT = 25;
+  const excessSpread = Math.max(0, sp3bp - NORMAL_SPREAD);
+  const mktPricedHikes = Math.round(excessSpread / HIKE_UNIT * 10) / 10;
+  let _pH = 0.15;
+  if      (spreadAdj >= 0.05)  _pH = 0.75;
+  else if (spreadAdj >= 0.03)  _pH = 0.55;
+  else if (spreadAdj >= 0.01)  _pH = 0.30;
+  else if (spreadAdj > -0.01)  _pH = 0.15;
+  else if (spreadAdj >= -0.03) _pH = 0.05;
+  else                         _pH = 0.03;
+  const expectedHikes = Math.round(_pH * 1.5 * 10) / 10;
+  const overPriced    = Math.round((mktPricedHikes - expectedHikes) * 10) / 10;
+
+  const params = {
+    kofr:     pred.latestKofr,
+    base:     pred.latestBase,
+    gb3:      pred.latestGb3,
+    gb5:      pred.latestGb5,
+    gb10:     pred.latestGb10,
+    cpi:      pred.latestKrCpi,
+    wti:      pred.latestWti,
+    usdkrw:   pred.latestUsdkrw,
+    usBase:   pred.latestUsBase,
+    sp3bp, totalScore, direction,
+    mktPricedHikes, expectedHikes, overPriced,
+    p3m:  pred.p3m,
+    p6m:  pred.p6m,
+    p12m: pred.p12m,
+  };
+
+  try {
+    const resp = await fetch(gasUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'claude_analysis', params })
+    });
+    const data = await resp.json();
+    const raw  = data.result || '';
+
+    // JSON 파싱
+    const clean = raw.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+
+    // 결과 표시
+    const area = document.getElementById('claude-analysis-area');
+    if (area) area.style.display = 'block';
+
+    const now = new Date().toLocaleTimeString('ko-KR');
+    const timeEl = document.getElementById('claude-analysis-time');
+    if (timeEl) timeEl.textContent = `(${now} 기준)`;
+
+    const setEl = (id, label, text) => {
+      const el = document.getElementById(id);
+      if (el && text) el.innerHTML = `<strong style="color:#a78bfa;">${label}</strong> ${text}`;
+    };
+    setEl('claude-market-summary', '📰 시장 현황:', parsed.market_summary || '');
+    setEl('claude-kofr-strategy', '⚡ KOFR FRN 판단:', parsed.kofr_strategy || '');
+    setEl('claude-procurement',   '💼 조달 전략:', parsed.procurement_strategy || '');
+    setEl('claude-risk',          '⚠️ 리스크:', parsed.risk_factors || '');
+
+    // 시나리오 카드 업데이트
+    if (parsed.scenarios) {
+      const sc = document.getElementById('fc-scenarios');
+      if (sc) {
+        const cards = sc.querySelectorAll('.fc-scenario-card');
+        const scMap = [parsed.scenarios.cut, parsed.scenarios.hold, parsed.scenarios.hike];
+        cards.forEach((card, i) => {
+          if (scMap[i]) {
+            const stratEl = card.querySelector('.fc-sc-strategy');
+            if (stratEl) stratEl.textContent = scMap[i];
+          }
+        });
+      }
+    }
+
+    if (btn) { btn.innerHTML = '✅ AI 분석 완료'; btn.disabled = false; }
+
+  } catch(e) {
+    console.error('Claude 분석 오류:', e);
+    if (btn) { btn.innerHTML = '❌ 오류 재시도'; btn.disabled = false; }
+  }
 }
 
 function refreshForecast() {
