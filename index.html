@@ -3451,10 +3451,18 @@ function renderForecastChart(forecast, pred) {
   const allLabels = [...labelSet].sort().slice(-18);
   const chartLabels = [...allLabels, '+3M', '+6M', '+12M'];
 
-  const alignSeries = (arr) => {
+  const alignSeries = (arr, fillLatest=null) => {
     const map = {};
     arr.forEach(d => { map[d.t.slice(0,7)] = d.v; });
-    return allLabels.map(l => map[l] ?? null);
+    const result = allLabels.map(l => map[l] ?? null);
+    // 최신값으로 뒷부분 null 채우기 (기준금리처럼 월별 데이터가 최신달 없을 때)
+    if (fillLatest !== null) {
+      for (let i = result.length-1; i >= 0; i--) {
+        if (result[i] !== null) break;
+        result[i] = fillLatest;
+      }
+    }
+    return result;
   };
 
   const predData = [...Array(Math.max(0, allLabels.length-1)).fill(null), pred.latestKofr, pred.p3m, pred.p6m, pred.p12m];
@@ -3466,7 +3474,7 @@ function renderForecastChart(forecast, pred) {
       labels: chartLabels,
       datasets: [
         { label:'KOFR',      data:[...alignSeries(kofr),null,null,null],  borderColor:'#00b4d8', backgroundColor:'rgba(0,180,216,0.08)', borderWidth:2, pointRadius:2, tension:0.3, fill:true, spanGaps:true },
-        { label:'기준금리',   data:[...alignSeries(base_),null,null,null], borderColor:'#f85149', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
+        { label:'기준금리',   data:[...alignSeries(base_, pred.latestBase),null,null,null], borderColor:'#f85149', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
         { label:'CD(91일)',   data:[...alignSeries(cd),null,null,null],    borderColor:'#d29922', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
         { label:'국고채(3년)',data:[...alignSeries(gb3),null,null,null],   borderColor:'#3fb950', borderWidth:1.5, pointRadius:2, tension:0.3, spanGaps:true },
         // KOFR 예측 (범례 숨김, 그래프에만 표시)
