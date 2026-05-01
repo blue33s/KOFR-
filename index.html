@@ -3496,23 +3496,25 @@ function renderForecastChart(forecast, pred) {
           },
           onClick: (e, legendItem, legend) => {
             const chart = legend.chart;
-            const idx   = legendItem.datasetIndex;
             const label = legendItem.text;
-            // 실선 토글 시 대응 예측선도 함께 토글
-            const predMap = { '기준금리':'기준금리 예측', 'CD(91일)':'CD 예측', '국고채(3년)':'국고채 예측', 'KOFR':'KOFR 예측' };
+            // 실선 클릭 → 해당 예측선만 토글 (실선은 항상 표시)
+            const predMap = {
+              'KOFR':      'KOFR 예측',
+              '기준금리':  '기준금리 예측',
+              'CD(91일)':  'CD 예측',
+              '국고채(3년)':'국고채 예측'
+            };
             const predLabel = predMap[label];
-            // 기본 토글
-            const meta = chart.getDatasetMeta(idx);
-            meta.hidden = meta.hidden === null ? !chart.data.datasets[idx].hidden : null;
-            // 예측선도 같이 토글
             if (predLabel) {
               const predIdx = chart.data.datasets.findIndex(d => d.label === predLabel);
               if (predIdx >= 0) {
                 const predMeta = chart.getDatasetMeta(predIdx);
-                predMeta.hidden = meta.hidden;
+                // hidden이 null이면 dataset.hidden 기준, 아니면 meta.hidden 기준
+                const isHidden = predMeta.hidden ?? chart.data.datasets[predIdx].hidden;
+                predMeta.hidden = !isHidden;
+                chart.update();
               }
             }
-            chart.update();
           }
         },
         tooltip:{ backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1, titleColor:'#e6edf3', bodyColor:'#8b949e',
