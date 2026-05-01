@@ -495,8 +495,10 @@
   <!-- 탭 네비게이션 -->
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('calc')">📊 금리계산기</button>
-    <button class="tab-btn" onclick="switchTab('chart')">📉 KOFR 추이 차트</button>
-    <button class="tab-btn" onclick="switchTab('dash')">📈 금리 대시보드</button>
+    <button class="tab-btn" onclick="switchTab('market')">📉 KOFR 추이 · 금리 대시보드</button>
+    <button class="tab-btn" onclick="switchTab('bank')">🏦 은행 경영지표</button>
+    <button class="tab-btn" onclick="switchTab('bond')">📋 채권 발행내역</button>
+    <button class="tab-btn" onclick="switchTab('forecast')">🔮 금리 예측 · 조달 대응</button>
 
   </div>
 
@@ -684,63 +686,64 @@
 
   </div><!-- /tab-calc -->
 
-  <!-- 탭: KOFR 추이 차트 -->
-  <div id="tab-chart" class="tab-content">
+  <!-- 탭: KOFR 추이 · 금리 대시보드 (통합) -->
+  <div id="tab-market" class="tab-content">
 
-    <div class="dash-status">
-      <div class="dash-dot" id="chartDot"></div>
-      <span id="chartStatusText">GAS URL 설정 후 조회 가능합니다</span>
-      <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
-        <select id="chartPeriod" onchange="renderChart()" style="
-          background:var(--surface2);border:1px solid var(--border2);
-          color:var(--text2);font-family:var(--mono);font-size:11px;
-          padding:3px 8px;border-radius:4px;outline:none;cursor:pointer;">
-          <option value="30">1개월</option>
-          <option value="90" selected>3개월</option>
-          <option value="180">6개월</option>
-          <option value="365">1년</option>
-          <option value="0">전체</option>
-        </select>
-        <button class="refresh-btn" onclick="loadChartData()">↻ 새로고침</button>
-      </div>
-    </div>
+    <!-- ── 상단: KOFR 추이 차트 ── -->
+    <div style="margin-bottom:28px;">
+      <div class="section-title" style="margin-bottom:14px;">📉 KOFR 금리 추이</div>
 
-    <!-- 차트 영역 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
-      <canvas id="kofrChart" style="width:100%;height:320px;"></canvas>
-    </div>
+      <div class="dash-status">
+        <div class="dash-dot" id="chartDot"></div>
+        <span id="chartStatusText">데이터 로드 중...</span>
+        <div style="display:flex;gap:8px;align-items:center;margin-left:auto;">
+          <select id="chartPeriod" onchange="renderChart()" style="
+            background:var(--surface2);border:1px solid var(--border2);
+            color:var(--text2);font-family:var(--mono);font-size:11px;
+            padding:3px 8px;border-radius:4px;outline:none;cursor:pointer;">
+            <option value="30">1개월</option>
+            <option value="90" selected>3개월</option>
+            <option value="180">6개월</option>
+            <option value="365">1년</option>
+            <option value="0">전체</option>
+          </select>
+        </div>
+      </div>
 
-    <!-- 요약 통계 -->
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:20px;">
-      <div class="rate-card">
-        <div class="rate-card-label">기간 최고</div>
-        <div class="rate-card-value" id="chartMax" style="font-size:18px;">--</div>
-        <div class="rate-card-date" id="chartMaxDate">-</div>
-        <div class="rate-card-accent" style="background:var(--red)"></div>
+      <!-- 차트 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:16px;">
+        <canvas id="kofrChart" style="width:100%;height:280px;"></canvas>
       </div>
-      <div class="rate-card">
-        <div class="rate-card-label">기간 최저</div>
-        <div class="rate-card-value" id="chartMin" style="font-size:18px;">--</div>
-        <div class="rate-card-date" id="chartMinDate">-</div>
-        <div class="rate-card-accent" style="background:var(--green)"></div>
-      </div>
-      <div class="rate-card">
-        <div class="rate-card-label">기간 평균</div>
-        <div class="rate-card-value" id="chartAvg" style="font-size:18px;">--</div>
-        <div class="rate-card-date" id="chartDays">-</div>
-        <div class="rate-card-accent" style="background:var(--accent)"></div>
-      </div>
-      <div class="rate-card">
-        <div class="rate-card-label">전일 대비</div>
-        <div class="rate-card-value" id="chartChg" style="font-size:18px;">--</div>
-        <div class="rate-card-date" id="chartChgDate">-</div>
-        <div class="rate-card-accent" style="background:var(--yellow)"></div>
-      </div>
-    </div>
 
-    <!-- 최근 10일 테이블 -->
-    <div class="dash-section">
-      <div class="section-title">최근 KOFR 금리 내역</div>
+      <!-- 요약 통계 카드 -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:16px;">
+        <div class="rate-card">
+          <div class="rate-card-label">기간 최고</div>
+          <div class="rate-card-value" id="chartMax" style="font-size:16px;">--</div>
+          <div class="rate-card-date" id="chartMaxDate">-</div>
+          <div class="rate-card-accent" style="background:var(--red)"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">기간 최저</div>
+          <div class="rate-card-value" id="chartMin" style="font-size:16px;">--</div>
+          <div class="rate-card-date" id="chartMinDate">-</div>
+          <div class="rate-card-accent" style="background:var(--green)"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">기간 평균</div>
+          <div class="rate-card-value" id="chartAvg" style="font-size:16px;">--</div>
+          <div class="rate-card-date" id="chartDays">-</div>
+          <div class="rate-card-accent" style="background:var(--accent)"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">전일 대비</div>
+          <div class="rate-card-value" id="chartChg" style="font-size:16px;">--</div>
+          <div class="rate-card-date" id="chartChgDate">-</div>
+          <div class="rate-card-accent" style="background:var(--yellow)"></div>
+        </div>
+      </div>
+
+      <!-- 최근 내역 테이블 -->
       <div class="dash-table-wrap">
         <table class="dash-table">
           <thead>
@@ -751,100 +754,416 @@
             </tr>
           </thead>
           <tbody id="recentKofrBody">
-            <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:20px;">
-              데이터를 불러오는 중...
+            <tr><td colspan="3" style="text-align:center;color:var(--text3);padding:16px;">
+              로드 중...
             </td></tr>
           </tbody>
         </table>
       </div>
     </div>
 
-  </div><!-- /tab-chart -->
+    <!-- 구분선 -->
+    <div style="border-top:2px solid var(--border);margin:8px 0 28px;"></div>
 
-  <!-- 탭: 금리 대시보드 -->
-  <div id="tab-dash" class="tab-content">
+    <!-- ── 하단: 금리 대시보드 ── -->
+    <div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="section-title" style="margin-bottom:0;">📈 주요금리 현황</div>
+        <div class="dash-status" style="margin-bottom:0;">
+          <div class="dash-dot" id="dashDot"></div>
+          <span id="dashStatusText">조회 중...</span>
+          <button class="refresh-btn" onclick="loadDashboard()" style="margin-left:8px;">↻ 새로고침</button>
+        </div>
+      </div>
 
-    <div class="dash-status">
-      <div class="dash-dot" id="dashDot"></div>
-      <span id="dashStatusText">ECOS API 키 설정 후 조회 가능합니다</span>
-      <button class="refresh-btn" onclick="loadDashboard()">↻ 새로고침</button>
+      <!-- 주요금리 카드 -->
+      <div class="dashboard-grid" style="margin-bottom:16px;">
+        <div class="rate-card">
+          <div class="rate-card-label">KOFR (공시RFR)</div>
+          <div class="rate-card-value highlight" id="dc-kofr">--</div>
+          <div class="rate-card-date" id="dd-kofr">-</div>
+          <div class="rate-card-accent" style="background:var(--accent)"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">한국은행 기준금리</div>
+          <div class="rate-card-value" id="dc-base">--</div>
+          <div class="rate-card-date" id="dd-base">-</div>
+          <div class="rate-card-accent" style="background:#6e7681"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">콜금리 (1일)</div>
+          <div class="rate-card-value" id="dc-call">--</div>
+          <div class="rate-card-date" id="dd-call">-</div>
+          <div class="rate-card-accent" style="background:#3fb950"></div>
+        </div>
+        <div class="rate-card">
+          <div class="rate-card-label">CD (91일)</div>
+          <div class="rate-card-value" id="dc-cd">--</div>
+          <div class="rate-card-date" id="dd-cd">-</div>
+          <div class="rate-card-accent" style="background:#d29922"></div>
+        </div>
+      </div>
+
+      <!-- 주요금리 테이블 -->
+      <div class="dash-section">
+        <div class="section-title">주요 금리 현황 (vs KOFR 스프레드)</div>
+        <div class="dash-table-wrap">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>금리 항목</th>
+                <th>최신일자</th>
+                <th>금리 (%)</th>
+                <th>vs KOFR 스프레드</th>
+              </tr>
+            </thead>
+            <tbody id="rateTableBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px;">
+                조회 중...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- 채권금리 테이블 -->
+      <div class="dash-section">
+        <div class="section-title">단기금융시장 금리</div>
+        <div class="dash-table-wrap">
+          <table class="dash-table">
+            <thead>
+              <tr>
+                <th>금리 항목</th>
+                <th>최신일자</th>
+                <th>금리 (%)</th>
+                <th>vs KOFR 스프레드</th>
+              </tr>
+            </thead>
+            <tbody id="shortRateBody">
+              <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:16px;">
+                조회 중...
+              </td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
-    <!-- 주요금리 카드 -->
-    <div class="dashboard-grid" id="rateCards">
-      <div class="rate-card">
-        <div class="rate-card-label">KOFR (공시RFR)</div>
-        <div class="rate-card-value highlight" id="dc-kofr">--</div>
-        <div class="rate-card-date" id="dd-kofr">-</div>
-        <div class="rate-card-accent" style="background:var(--accent)"></div>
+  </div><!-- /tab-market -->
+
+  <!-- 탭: 은행 경영지표 대시보드 -->
+  <div id="tab-bank" class="tab-content">
+
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">🏦 은행별 주요 경영지표 비교</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px;">iM뱅크 vs 시중은행 vs 지역은행 · 공공데이터포털 금융통계국내은행정보</div>
       </div>
-      <div class="rate-card">
-        <div class="rate-card-label">한국은행 기준금리</div>
-        <div class="rate-card-value" id="dc-base">--</div>
-        <div class="rate-card-date" id="dd-base">-</div>
-        <div class="rate-card-accent" style="background:#6e7681"></div>
-      </div>
-      <div class="rate-card">
-        <div class="rate-card-label">콜금리 (1일)</div>
-        <div class="rate-card-value" id="dc-call">--</div>
-        <div class="rate-card-date" id="dd-call">-</div>
-        <div class="rate-card-accent" style="background:#3fb950"></div>
-      </div>
-      <div class="rate-card">
-        <div class="rate-card-label">CD (91일)</div>
-        <div class="rate-card-value" id="dc-cd">--</div>
-        <div class="rate-card-date" id="dd-cd">-</div>
-        <div class="rate-card-accent" style="background:#d29922"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <select id="bankYear" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+          <option value="2024">2024년</option>
+          <option value="2023">2023년</option>
+          <option value="2022">2022년</option>
+        </select>
+        <select id="bankQuarter" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+          <option value="12">연간(12월)</option>
+          <option value="09">3분기(9월)</option>
+          <option value="06">반기(6월)</option>
+          <option value="03">1분기(3월)</option>
+        </select>
+        <button class="refresh-btn" onclick="loadBankDashboard()">↻ 조회</button>
       </div>
     </div>
 
-    <!-- 금리 비교 테이블 -->
-    <div class="dash-section">
-      <div class="section-title">주요 금리 현황 (vs KOFR 스프레드)</div>
-      <div class="dash-table-wrap">
-        <table class="dash-table">
-          <thead>
-            <tr>
-              <th>금리 항목</th>
-              <th>최신일자</th>
-              <th>금리 (%)</th>
-              <th>vs KOFR 스프레드</th>
-            </tr>
-          </thead>
-          <tbody id="rateTableBody">
-            <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px;">
-              데이터를 불러오려면 ECOS API 키가 필요합니다
-            </td></tr>
-          </tbody>
-        </table>
+    <!-- 상태바 -->
+    <div class="dash-status" style="margin-bottom:16px;">
+      <div class="dash-dot" id="bankDot"></div>
+      <span id="bankStatusText">공공데이터포털 API 키 설정 후 조회 가능합니다</span>
+    </div>
+
+    <!-- API 키 입력 -->
+    <div id="bankApiKeyPanel" style="background:rgba(0,180,216,0.05);border:1px solid rgba(0,180,216,0.2);border-radius:8px;padding:14px 16px;margin-bottom:20px;">
+      <div style="font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);margin-bottom:8px;">🔑 공공데이터포털 API 키 (기존 보유키 사용 가능)</div>
+      <div style="display:flex;gap:8px;">
+        <input type="password" id="bankApiKey" placeholder="공공데이터포털 디코딩 키 입력"
+          style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;outline:none;">
+        <button class="update-btn" onclick="saveBankApiKey()" style="white-space:nowrap;">저장</button>
+        <button class="update-btn" onclick="loadBankDashboard()" style="white-space:nowrap;background:linear-gradient(135deg,#3fb950,#238636);">조회</button>
       </div>
     </div>
 
-    <!-- 단기금융시장 금리 -->
-    <div class="dash-section">
-      <div class="section-title">단기금융시장 금리</div>
-      <div class="dash-table-wrap">
-        <table class="dash-table">
-          <thead>
-            <tr>
-              <th>금리 항목</th>
-              <th>최신일자</th>
-              <th>금리 (%)</th>
-              <th>vs KOFR 스프레드</th>
-            </tr>
-          </thead>
-          <tbody id="shortRateBody">
-            <tr><td colspan="4" style="text-align:center;color:var(--text3);padding:20px;">
-              데이터를 불러오려면 ECOS API 키가 필요합니다
-            </td></tr>
-          </tbody>
-        </table>
+    <!-- iM뱅크 강조 카드 -->
+    <div style="margin-bottom:20px;">
+      <div class="section-title">📌 iM뱅크 주요지표</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;" id="imBankCards">
+        <div class="rate-card"><div class="rate-card-label">ROA</div><div class="rate-card-value highlight" id="im-roa">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--accent)"></div></div>
+        <div class="rate-card"><div class="rate-card-label">ROE</div><div class="rate-card-value highlight" id="im-roe">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--accent)"></div></div>
+        <div class="rate-card"><div class="rate-card-label">NIM</div><div class="rate-card-value" id="im-nim">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--green)"></div></div>
+        <div class="rate-card"><div class="rate-card-label">BIS비율</div><div class="rate-card-value" id="im-bis">--</div><div class="rate-card-date">건전성</div><div class="rate-card-accent" style="background:var(--yellow)"></div></div>
+        <div class="rate-card"><div class="rate-card-label">고정이하여신비율</div><div class="rate-card-value" id="im-npl">--</div><div class="rate-card-date">건전성</div><div class="rate-card-accent" style="background:var(--red)"></div></div>
+        <div class="rate-card"><div class="rate-card-label">총자산</div><div class="rate-card-value" id="im-asset" style="font-size:16px;">--</div><div class="rate-card-date">규모</div><div class="rate-card-accent" style="background:#6e7681"></div></div>
       </div>
     </div>
 
-  </div><!-- /tab-dash -->
+    <!-- 비교 탭 -->
+    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
+      <button class="period-btn active" id="cmpBtn-roa" onclick="showBankMetric('roa')">ROA</button>
+      <button class="period-btn" id="cmpBtn-roe" onclick="showBankMetric('roe')">ROE</button>
+      <button class="period-btn" id="cmpBtn-nim" onclick="showBankMetric('nim')">NIM</button>
+      <button class="period-btn" id="cmpBtn-bis" onclick="showBankMetric('bis')">BIS비율</button>
+      <button class="period-btn" id="cmpBtn-npl" onclick="showBankMetric('npl')">고정이하여신비율</button>
+      <button class="period-btn" id="cmpBtn-asset" onclick="showBankMetric('asset')">총자산</button>
+    </div>
 
+    <!-- 비교 차트 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
+      <canvas id="bankChart" style="width:100%;height:300px;"></canvas>
+    </div>
 
+    <!-- 전체 비교 테이블 -->
+    <div class="section-title">은행별 전체 지표 비교</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;min-width:700px;">
+        <thead>
+          <tr style="background:var(--surface2);">
+            <th style="padding:10px 14px;text-align:left;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">은행</th>
+            <th style="padding:10px 14px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">구분</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">ROA(%)</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">ROE(%)</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">NIM(%)</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">BIS(%)</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">고정이하(%)</th>
+            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">총자산(조)</th>
+          </tr>
+        </thead>
+        <tbody id="bankTableBody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;font-family:var(--mono);font-size:12px;">조회 버튼을 클릭하세요</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab-bank -->
+
+  <!-- 탭: 채권 발행내역 대시보드 -->
+  <div id="tab-bond" class="tab-content">
+
+    <!-- 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div style="font-size:15px;font-weight:700;color:var(--text);">📋 은행별 채권 발행내역</div>
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px;">DART 투자설명서 기반 · 고정/변동/KOFR FRN 구분</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input type="date" id="bondFromDate" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+        <span style="color:var(--text3);font-size:11px;">~</span>
+        <input type="date" id="bondToDate" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+        <select id="bondBankFilter" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+          <option value="all">전체 은행</option>
+          <option value="국민은행">국민은행</option>
+          <option value="신한은행">신한은행</option>
+          <option value="하나은행">하나은행</option>
+          <option value="우리은행">우리은행</option>
+          <option value="iM뱅크">iM뱅크</option>
+          <option value="부산은행">부산은행</option>
+          <option value="경남은행">경남은행</option>
+          <option value="광주은행">광주은행</option>
+          <option value="전북은행">전북은행</option>
+        </select>
+        <select id="bondTypeFilter" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
+          <option value="all">전체 유형</option>
+          <option value="kofr">KOFR FRN</option>
+          <option value="변동">변동금리</option>
+          <option value="고정">고정금리</option>
+        </select>
+        <button class="refresh-btn" onclick="loadBondDashboard()">↻ 새로고침</button>
+      </div>
+    </div>
+
+    <!-- 상태바 -->
+    <div class="dash-status" style="margin-bottom:16px;">
+      <div class="dash-dot" id="bondDot"></div>
+      <span id="bondStatusText">데이터 로드 중...</span>
+    </div>
+
+    <!-- 요약 카드 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;" id="bondSummaryCards">
+      <div class="rate-card" style="border-color:rgba(0,255,247,0.1);">
+        <div class="rate-card-label">총 발행금액</div>
+        <div class="rate-card-value highlight" id="bond-total-amt" style="font-size:18px;color:#e6edf3;">--</div>
+        <div class="rate-card-date" id="bond-total-cnt">-</div>
+        <div class="rate-card-accent" style="background:linear-gradient(90deg,#00fff7,#1a6aff);"></div>
+      </div>
+      <div class="rate-card" style="background:linear-gradient(135deg,rgba(0,255,247,0.05) 0%,rgba(0,20,40,0.8) 100%);border-color:rgba(0,255,247,0.3);box-shadow:0 0 20px rgba(0,255,247,0.1),inset 0 1px 0 rgba(0,255,247,0.15);">
+        <div class="rate-card-label" style="color:#00fff7;letter-spacing:0.5px;">⚡ KOFR FRN</div>
+        <div class="rate-card-value" id="bond-kofr-amt" style="font-size:18px;color:#00fff7;text-shadow:0 0 12px rgba(0,255,247,0.6);">--</div>
+        <div class="rate-card-date" id="bond-kofr-cnt">-</div>
+        <div class="rate-card-accent" style="background:linear-gradient(90deg,#00fff7,#0a7ef0);box-shadow:0 0 8px rgba(0,255,247,0.5);"></div>
+      </div>
+      <div class="rate-card" style="border-color:rgba(26,106,255,0.2);">
+        <div class="rate-card-label">변동금리(비KOFR)</div>
+        <div class="rate-card-value" id="bond-var-amt" style="font-size:18px;color:#1a6aff;">--</div>
+        <div class="rate-card-date" id="bond-var-cnt">-</div>
+        <div class="rate-card-accent" style="background:#1a6aff;"></div>
+      </div>
+      <div class="rate-card" style="border-color:rgba(74,85,104,0.3);">
+        <div class="rate-card-label">고정금리</div>
+        <div class="rate-card-value" id="bond-fix-amt" style="font-size:18px;color:#4a5568;">--</div>
+        <div class="rate-card-date" id="bond-fix-cnt">-</div>
+        <div class="rate-card-accent" style="background:#4a5568;"></div>
+      </div>
+      <div class="rate-card" style="background:linear-gradient(135deg,rgba(0,255,247,0.05) 0%,rgba(0,20,40,0.8) 100%);border-color:rgba(0,255,247,0.3);box-shadow:0 0 20px rgba(0,255,247,0.1),inset 0 1px 0 rgba(0,255,247,0.15);">
+        <div class="rate-card-label" style="color:#00fff7;letter-spacing:0.5px;">⚡ KOFR 평균 스프레드</div>
+        <div class="rate-card-value" id="bond-avg-spread" style="font-size:18px;color:#00fff7;text-shadow:0 0 12px rgba(0,255,247,0.6);">--</div>
+        <div class="rate-card-date">KOFR FRN 기준</div>
+        <div class="rate-card-accent" style="background:linear-gradient(90deg,#00fff7,#0a7ef0);box-shadow:0 0 8px rgba(0,255,247,0.5);"></div>
+      </div>
+    </div>
+
+    <!-- 차트 -->
+    <div class="section-title">은행별 누적 발행금액 (억원)</div>
+    <div style="background:linear-gradient(145deg,rgba(0,20,40,0.9) 0%,rgba(0,10,25,0.95) 100%);border:1px solid rgba(0,255,247,0.15);border-radius:16px;padding:20px;margin-bottom:20px;position:relative;overflow:hidden;backdrop-filter:blur(10px);box-shadow:0 0 40px rgba(0,255,247,0.04) inset, 0 4px 24px rgba(0,0,0,0.4);">
+      <div style="position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,255,247,0.6),transparent);"></div>
+      <div style="position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(26,106,255,0.3),transparent);"></div>
+      <canvas id="bondChart" style="width:100%;height:300px;"></canvas>
+    </div>
+
+    <!-- 발행내역 테이블 -->
+    <div class="section-title">발행내역 상세</div>
+    <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;min-width:650px;">
+        <thead>
+          <tr style="background:var(--surface2);">
+            <th style="padding:9px 12px;text-align:left;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">은행</th>
+            <th style="padding:9px 12px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">발행일</th>
+            <th style="padding:9px 12px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">만기일</th>
+            <th style="padding:9px 12px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">발행가액(억)</th>
+            <th style="padding:9px 12px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">이자유형</th>
+            <th style="padding:9px 12px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">KOFR</th>
+            <th style="padding:9px 12px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">스프레드(%)</th>
+          </tr>
+        </thead>
+        <tbody id="bondTableBody">
+          <tr><td colspan="7" style="text-align:center;color:var(--text3);padding:30px;font-family:var(--mono);font-size:12px;">로드 중...</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+  </div><!-- /tab-bond -->
+
+  <!-- 탭: 금리 예측 · 조달 대응 -->
+  <div id="tab-forecast" class="tab-content">
+
+    <!-- 상단 헤더 -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
+      <div>
+        <div style="font-size:16px;font-weight:700;color:var(--text);">🔮 금리 예측 및 조달 · 운용 대응 전략</div>
+        <div style="font-size:12px;color:var(--text3);font-family:var(--mono);margin-top:4px;">
+          ECOS 실데이터 기반 시계열 분석 + AI 전략 제안
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span class="dash-dot loading" id="fcDot"></span>
+        <span style="font-size:11px;color:var(--text3);font-family:var(--mono);" id="fcStatusText">대기 중</span>
+        <button onclick="refreshForecast()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;font-family:var(--mono);">↻ 새로고침</button>
+      </div>
+    </div>
+
+    <!-- 금리 현황 카드 -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">KOFR (현재)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--accent);font-family:var(--mono);" id="fc-kofr-now">—</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">기준금리</div>
+        <div style="font-size:22px;font-weight:700;color:var(--red);font-family:var(--mono);" id="fc-base-now">—</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">CD (91일)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--yellow);font-family:var(--mono);" id="fc-cd-now">—</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">국고채 (3년)</div>
+        <div style="font-size:22px;font-weight:700;color:var(--green);font-family:var(--mono);" id="fc-gb3-now">—</div>
+      </div>
+      <div style="background:var(--surface);border:1px solid rgba(0,180,216,0.3);border-radius:10px;padding:16px;text-align:center;">
+        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:6px;">금리 방향성</div>
+        <div style="font-size:18px;font-weight:700;font-family:var(--mono);" id="fc-direction">—</div>
+      </div>
+    </div>
+
+    <!-- 예측 금리 카드 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:12px;">📈 KOFR 예측 (룰베이스 모델)</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px;">+3개월</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);font-family:var(--mono);" id="fc-kofr-3m">—</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px;">+6개월</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);font-family:var(--mono);" id="fc-kofr-6m">—</div>
+        </div>
+        <div style="text-align:center;padding:12px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+          <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:4px;">+12개월</div>
+          <div style="font-size:20px;font-weight:700;color:var(--accent);font-family:var(--mono);" id="fc-kofr-12m">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 그래프 영역 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div style="font-size:12px;color:var(--text2);font-weight:600;margin-bottom:4px;">📊 금리 추이 · 예측 (실선: 실제 / 점선: 예측)</div>
+      <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:16px;" id="fc-chart-reason">AI 분석 로드 중...</div>
+      <div style="height:300px;position:relative;">
+        <canvas id="forecastChartCanvas"></canvas>
+      </div>
+    </div>
+
+    <!-- 조달 전략 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;margin-bottom:20px;">
+      <div style="font-size:13px;color:var(--text);font-weight:700;margin-bottom:16px;">💡 AI 조달 전략 제안</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px;">
+        <div style="background:var(--surface2);border-radius:8px;padding:16px;border-left:3px solid var(--accent);">
+          <div style="font-size:11px;color:var(--accent);font-family:var(--mono);font-weight:600;margin-bottom:8px;">⏱ 만기 전략 (단기 / 장기)</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;" id="fc-proc-term">분석 중...</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px;border-left:3px solid var(--green);">
+          <div style="font-size:11px;color:var(--green);font-family:var(--mono);font-weight:600;margin-bottom:8px;">📌 금리 유형 (고정 / KOFR FRN)</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;" id="fc-proc-type">분석 중...</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:8px;padding:16px;border-left:3px solid var(--yellow);">
+          <div style="font-size:11px;color:var(--yellow);font-family:var(--mono);font-weight:600;margin-bottom:8px;">🏦 조달 수단 (금융채 / CD / 예금)</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.7;" id="fc-proc-instrument">분석 중...</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 시나리오 -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;">
+      <div style="font-size:13px;color:var(--text);font-weight:700;margin-bottom:16px;">🎲 향후 시나리오별 대응 전략</div>
+      <div id="fc-scenarios" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;">
+        <div style="text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px;padding:30px;">AI 분석 로드 중...</div>
+      </div>
+    </div>
+
+  </div><!-- /tab-forecast -->
+
+  <style>
+    .fc-scenario-card {
+      border-radius: 10px;
+      padding: 18px;
+      background: var(--surface2);
+    }
+    .fc-scenario-card.neutral { border-left: 3px solid var(--yellow); }
+    .fc-scenario-card.mild    { border-left: 3px solid var(--green); }
+    .fc-scenario-card.deep    { border-left: 3px solid var(--accent); }
+    .fc-sc-name     { font-size:12px;font-weight:700;color:var(--text);margin-bottom:6px; }
+    .fc-sc-kofr     { font-size:12px;font-family:var(--mono);color:var(--text2);margin-bottom:8px; }
+    .fc-sc-kofr strong { color:var(--accent); }
+    .fc-sc-strategy { font-size:12px;color:var(--text2);line-height:1.6; }
+  </style>
 
 </div>
 
@@ -852,7 +1171,7 @@
 // ─── EMBEDDED DATA ────────────────────────────────────────────────────────────
 // KOFR 데이터: 2025-01-10 ~ 2026-04-03 (구 엑셀 + 25년6월물 엑셀 병합)
 // 미공시 구간 추정 로직: 예탁원 방식 = 조회시점 이후 → 최종 공시 KOFR 일괄 적용 (backward)
-const KOFR_DATA = {"2025-01-10":3.093,"2025-01-13":3.093,"2025-01-14":3.024,"2025-01-15":3.044,"2025-01-16":3.111,"2025-01-17":3.094,"2025-01-20":3.121,"2025-01-21":3.141,"2025-01-22":3.105,"2025-01-23":3.102,"2025-01-24":3.177,"2025-01-31":3.137,"2025-02-03":3.062,"2025-02-04":3.016,"2025-02-05":3.015,"2025-02-06":3.013,"2025-02-07":3.012,"2025-02-10":3.044,"2025-02-11":3.034,"2025-02-12":3.054,"2025-02-13":3.073,"2025-02-14":3.073,"2025-02-17":3.073,"2025-02-18":3.025,"2025-02-19":3.021,"2025-02-20":3.017,"2025-02-21":3.025,"2025-02-24":3.063,"2025-02-25":2.89,"2025-02-26":2.859,"2025-02-27":2.831,"2025-02-28":2.832,"2025-03-04":2.779,"2025-03-05":2.777,"2025-03-06":2.787,"2025-03-07":2.804,"2025-03-10":2.804,"2025-03-11":2.765,"2025-03-12":2.746,"2025-03-13":2.764,"2025-03-14":2.754,"2025-03-17":2.745,"2025-03-18":2.744,"2025-03-19":2.744,"2025-03-20":2.755,"2025-03-21":2.765,"2025-03-24":2.745,"2025-03-25":2.738,"2025-03-26":2.727,"2025-03-27":2.713,"2025-03-28":2.697,"2025-03-31":2.775,"2025-04-01":2.719,"2025-04-02":2.747,"2025-04-03":2.756,"2025-04-04":2.784,"2025-04-07":2.813,"2025-04-08":2.8,"2025-04-09":2.799,"2025-04-10":2.802,"2025-04-11":2.802,"2025-04-14":2.802,"2025-04-15":2.791,"2025-04-16":2.778,"2025-04-17":2.792,"2025-04-18":2.812,"2025-04-21":2.801,"2025-04-22":2.801,"2025-04-23":2.801,"2025-04-24":2.802,"2025-04-25":2.804,"2025-04-28":2.793,"2025-04-29":2.764,"2025-04-30":2.793,"2025-05-02":2.81,"2025-05-07":2.811,"2025-05-08":2.762,"2025-05-09":2.783,"2025-05-12":2.812,"2025-05-13":2.811,"2025-05-14":2.812,"2025-05-15":2.783,"2025-05-16":2.782,"2025-05-19":2.771,"2025-05-20":2.767,"2025-05-21":2.77,"2025-05-22":2.762,"2025-05-23":2.793,"2025-05-26":2.812,"2025-05-27":2.79,"2025-05-28":2.74,"2025-05-29":2.561,"2025-05-30":2.591,"2025-06-02":2.561,"2025-06-04":2.513,"2025-06-05":2.482,"2025-06-09":2.562,"2025-06-10":2.552,"2025-06-11":2.552,"2025-06-12":2.542,"2025-06-13":2.561,"2025-06-16":2.561,"2025-06-17":2.543,"2025-06-18":2.55,"2025-06-19":2.523,"2025-06-20":2.552,"2025-06-23":2.543,"2025-06-24":2.534,"2025-06-25":2.533,"2025-06-26":2.552,"2025-06-27":2.533,"2025-06-30":2.581,"2025-07-01":2.524,"2025-07-02":2.519,"2025-07-03":2.484,"2025-07-04":2.495,"2025-07-07":2.494,"2025-07-08":2.503,"2025-07-09":2.503,"2025-07-10":2.533,"2025-07-11":2.503,"2025-07-14":2.523,"2025-07-15":2.492,"2025-07-16":2.463,"2025-07-17":2.465,"2025-07-18":2.485,"2025-07-21":2.483,"2025-07-22":2.474,"2025-07-23":2.485,"2025-07-24":2.465,"2025-07-25":2.496,"2025-07-28":2.493,"2025-07-29":2.493,"2025-07-30":2.496,"2025-07-31":2.533,"2025-08-01":2.475,"2025-08-04":2.485,"2025-08-05":2.528,"2025-08-06":2.529,"2025-08-07":2.474,"2025-08-08":2.534,"2025-08-11":2.514,"2025-08-12":2.524,"2025-08-13":2.513,"2025-08-14":2.504,"2025-08-18":2.492,"2025-08-19":2.461,"2025-08-20":2.443,"2025-08-21":2.447,"2025-08-22":2.495,"2025-08-25":2.495,"2025-08-26":2.504,"2025-08-27":2.494,"2025-08-28":2.475,"2025-08-29":2.523,"2025-09-01":2.495,"2025-09-02":2.505,"2025-09-03":2.504,"2025-09-04":2.524,"2025-09-05":2.56,"2025-09-08":2.524,"2025-09-09":2.584,"2025-09-10":2.584,"2025-09-11":2.55,"2025-09-12":2.532,"2025-09-15":2.542,"2025-09-16":2.522,"2025-09-17":2.512,"2025-09-18":2.514,"2025-09-19":2.534,"2025-09-22":2.552,"2025-09-23":2.552,"2025-09-24":2.533,"2025-09-25":2.543,"2025-09-26":2.534,"2025-09-29":2.544,"2025-09-30":2.572,"2025-10-01":2.535,"2025-10-02":2.534,"2025-10-10":2.543,"2025-10-13":2.542,"2025-10-14":2.513,"2025-10-15":2.496,"2025-10-16":2.505,"2025-10-17":2.513,"2025-10-20":2.532,"2025-10-21":2.513,"2025-10-22":2.521,"2025-10-23":2.522,"2025-10-24":2.541,"2025-10-27":2.542,"2025-10-28":2.542,"2025-10-29":2.494,"2025-10-30":2.502,"2025-10-31":2.531,"2025-11-03":2.491,"2025-11-04":2.499,"2025-11-05":2.499,"2025-11-06":2.495,"2025-11-07":2.524,"2025-11-10":2.532,"2025-11-11":2.532,"2025-11-12":2.512,"2025-11-13":2.532,"2025-11-14":2.522,"2025-11-17":2.513,"2025-11-18":2.511,"2025-11-19":2.502,"2025-11-20":2.513,"2025-11-21":2.523,"2025-11-24":2.524,"2025-11-25":2.523,"2025-11-26":2.542,"2025-11-27":2.533,"2025-11-28":2.532,"2025-12-01":2.532,"2025-12-02":2.514,"2025-12-03":2.505,"2025-12-04":2.516,"2025-12-05":2.514,"2025-12-08":2.534,"2025-12-09":2.57,"2025-12-10":2.569,"2025-12-11":2.553,"2025-12-12":2.552,"2025-12-15":2.551,"2025-12-16":2.532,"2025-12-17":2.532,"2025-12-18":2.532,"2025-12-19":2.542,"2025-12-22":2.562,"2025-12-23":2.563,"2025-12-24":2.553,"2025-12-26":2.563,"2025-12-29":2.563,"2025-12-30":2.562,"2025-12-31":2.687,"2026-01-02":2.543,"2026-01-05":2.522,"2026-01-06":2.532,"2026-01-07":2.532,"2026-01-08":2.544,"2026-01-09":2.571,"2026-01-12":2.581,"2026-01-13":2.58,"2026-01-14":2.589,"2026-01-15":2.567,"2026-01-16":2.557,"2026-01-19":2.548,"2026-01-20":2.549,"2026-01-21":2.559,"2026-01-22":2.532,"2026-01-23":2.57,"2026-01-26":2.578,"2026-01-27":2.547,"2026-01-28":2.496,"2026-01-29":2.513,"2026-01-30":2.552,"2026-02-02":2.56,"2026-02-03":2.54,"2026-02-04":2.54,"2026-02-05":2.55,"2026-02-06":2.55,"2026-02-09":2.55,"2026-02-10":2.58,"2026-02-11":2.58,"2026-02-12":2.551,"2026-02-13":2.551,"2026-02-19":2.541,"2026-02-20":2.531,"2026-02-23":2.531,"2026-02-24":2.541,"2026-02-25":2.552,"2026-02-26":2.562,"2026-02-27":2.56,"2026-03-03":2.539,"2026-03-04":2.511,"2026-03-05":2.499,"2026-03-06":2.49,"2026-03-09":2.56,"2026-03-10":2.566,"2026-03-11":2.565,"2026-03-12":2.56,"2026-03-13":2.539,"2026-03-16":2.529,"2026-03-17":2.519,"2026-03-18":2.499,"2026-03-19":2.52,"2026-03-20":2.521,"2026-03-23":2.521,"2026-03-24":2.532,"2026-03-25":2.531,"2026-03-26":2.531,"2026-03-27":2.521,"2026-03-30":2.512,"2026-03-31":2.584,"2026-04-01":2.541,"2026-04-02":2.49,"2026-04-03":2.49};
+const KOFR_DATA = {"2025-01-10":3.093,"2025-01-13":3.093,"2025-01-14":3.024,"2025-01-15":3.044,"2025-01-16":3.111,"2025-01-17":3.094,"2025-01-20":3.121,"2025-01-21":3.141,"2025-01-22":3.105,"2025-01-23":3.102,"2025-01-24":3.177,"2025-01-31":3.137,"2025-02-03":3.062,"2025-02-04":3.016,"2025-02-05":3.015,"2025-02-06":3.013,"2025-02-07":3.012,"2025-02-10":3.044,"2025-02-11":3.034,"2025-02-12":3.054,"2025-02-13":3.073,"2025-02-14":3.073,"2025-02-17":3.073,"2025-02-18":3.025,"2025-02-19":3.021,"2025-02-20":3.017,"2025-02-21":3.025,"2025-02-24":3.063,"2025-02-25":2.89,"2025-02-26":2.859,"2025-02-27":2.831,"2025-02-28":2.832,"2025-03-04":2.779,"2025-03-05":2.777,"2025-03-06":2.787,"2025-03-07":2.804,"2025-03-10":2.804,"2025-03-11":2.765,"2025-03-12":2.746,"2025-03-13":2.764,"2025-03-14":2.754,"2025-03-17":2.745,"2025-03-18":2.744,"2025-03-19":2.744,"2025-03-20":2.755,"2025-03-21":2.765,"2025-03-24":2.745,"2025-03-25":2.738,"2025-03-26":2.727,"2025-03-27":2.713,"2025-03-28":2.697,"2025-03-31":2.775,"2025-04-01":2.719,"2025-04-02":2.747,"2025-04-03":2.756,"2025-04-04":2.784,"2025-04-07":2.813,"2025-04-08":2.8,"2025-04-09":2.799,"2025-04-10":2.802,"2025-04-11":2.802,"2025-04-14":2.802,"2025-04-15":2.791,"2025-04-16":2.778,"2025-04-17":2.792,"2025-04-18":2.812,"2025-04-21":2.801,"2025-04-22":2.801,"2025-04-23":2.801,"2025-04-24":2.802,"2025-04-25":2.804,"2025-04-28":2.793,"2025-04-29":2.764,"2025-04-30":2.793,"2025-05-02":2.81,"2025-05-07":2.811,"2025-05-08":2.762,"2025-05-09":2.783,"2025-05-12":2.812,"2025-05-13":2.811,"2025-05-14":2.812,"2025-05-15":2.783,"2025-05-16":2.782,"2025-05-19":2.771,"2025-05-20":2.767,"2025-05-21":2.77,"2025-05-22":2.762,"2025-05-23":2.793,"2025-05-26":2.812,"2025-05-27":2.79,"2025-05-28":2.74,"2025-05-29":2.561,"2025-05-30":2.591,"2025-06-02":2.561,"2025-06-04":2.513,"2025-06-05":2.482,"2025-06-09":2.562,"2025-06-10":2.552,"2025-06-11":2.552,"2025-06-12":2.542,"2025-06-13":2.561,"2025-06-16":2.561,"2025-06-17":2.543,"2025-06-18":2.55,"2025-06-19":2.523,"2025-06-20":2.552,"2025-06-23":2.543,"2025-06-24":2.534,"2025-06-25":2.533,"2025-06-26":2.552,"2025-06-27":2.533,"2025-06-30":2.581,"2025-07-01":2.524,"2025-07-02":2.519,"2025-07-03":2.484,"2025-07-04":2.495,"2025-07-07":2.494,"2025-07-08":2.503,"2025-07-09":2.503,"2025-07-10":2.533,"2025-07-11":2.503,"2025-07-14":2.523,"2025-07-15":2.492,"2025-07-16":2.463,"2025-07-17":2.465,"2025-07-18":2.485,"2025-07-21":2.483,"2025-07-22":2.474,"2025-07-23":2.485,"2025-07-24":2.465,"2025-07-25":2.496,"2025-07-28":2.493,"2025-07-29":2.493,"2025-07-30":2.496,"2025-07-31":2.533,"2025-08-01":2.475,"2025-08-04":2.485,"2025-08-05":2.528,"2025-08-06":2.529,"2025-08-07":2.474,"2025-08-08":2.534,"2025-08-11":2.514,"2025-08-12":2.524,"2025-08-13":2.513,"2025-08-14":2.504,"2025-08-18":2.492,"2025-08-19":2.461,"2025-08-20":2.443,"2025-08-21":2.447,"2025-08-22":2.495,"2025-08-25":2.495,"2025-08-26":2.504,"2025-08-27":2.494,"2025-08-28":2.475,"2025-08-29":2.523,"2025-09-01":2.495,"2025-09-02":2.505,"2025-09-03":2.504,"2025-09-04":2.524,"2025-09-05":2.56,"2025-09-08":2.524,"2025-09-09":2.584,"2025-09-10":2.584,"2025-09-11":2.55,"2025-09-12":2.532,"2025-09-15":2.542,"2025-09-16":2.522,"2025-09-17":2.512,"2025-09-18":2.514,"2025-09-19":2.534,"2025-09-22":2.552,"2025-09-23":2.552,"2025-09-24":2.533,"2025-09-25":2.543,"2025-09-26":2.534,"2025-09-29":2.544,"2025-09-30":2.572,"2025-10-01":2.535,"2025-10-02":2.534,"2025-10-10":2.543,"2025-10-13":2.542,"2025-10-14":2.513,"2025-10-15":2.496,"2025-10-16":2.505,"2025-10-17":2.513,"2025-10-20":2.532,"2025-10-21":2.513,"2025-10-22":2.521,"2025-10-23":2.522,"2025-10-24":2.541,"2025-10-27":2.542,"2025-10-28":2.542,"2025-10-29":2.494,"2025-10-30":2.502,"2025-10-31":2.531,"2025-11-03":2.491,"2025-11-04":2.499,"2025-11-05":2.499,"2025-11-06":2.495,"2025-11-07":2.524,"2025-11-10":2.532,"2025-11-11":2.532,"2025-11-12":2.512,"2025-11-13":2.532,"2025-11-14":2.522,"2025-11-17":2.513,"2025-11-18":2.511,"2025-11-19":2.502,"2025-11-20":2.513,"2025-11-21":2.523,"2025-11-24":2.524,"2025-11-25":2.523,"2025-11-26":2.542,"2025-11-27":2.533,"2025-11-28":2.532,"2025-12-01":2.532,"2025-12-02":2.514,"2025-12-03":2.505,"2025-12-04":2.516,"2025-12-05":2.514,"2025-12-08":2.534,"2025-12-09":2.57,"2025-12-10":2.569,"2025-12-11":2.553,"2025-12-12":2.552,"2025-12-15":2.551,"2025-12-16":2.532,"2025-12-17":2.532,"2025-12-18":2.532,"2025-12-19":2.542,"2025-12-22":2.562,"2025-12-23":2.563,"2025-12-24":2.553,"2025-12-26":2.563,"2025-12-29":2.563,"2025-12-30":2.562,"2025-12-31":2.687,"2026-01-02":2.543,"2026-01-05":2.522,"2026-01-06":2.532,"2026-01-07":2.532,"2026-01-08":2.544,"2026-01-09":2.571,"2026-01-12":2.581,"2026-01-13":2.58,"2026-01-14":2.589,"2026-01-15":2.567,"2026-01-16":2.557,"2026-01-19":2.548,"2026-01-20":2.549,"2026-01-21":2.559,"2026-01-22":2.532,"2026-01-23":2.57,"2026-01-26":2.578,"2026-01-27":2.547,"2026-01-28":2.496,"2026-01-29":2.513,"2026-01-30":2.552,"2026-02-02":2.56,"2026-02-03":2.54,"2026-02-04":2.54,"2026-02-05":2.55,"2026-02-06":2.55,"2026-02-09":2.55,"2026-02-10":2.58,"2026-02-11":2.58,"2026-02-12":2.551,"2026-02-13":2.551,"2026-02-19":2.541,"2026-02-20":2.531,"2026-02-23":2.531,"2026-02-24":2.541,"2026-02-25":2.552,"2026-02-26":2.562,"2026-02-27":2.56,"2026-03-03":2.539,"2026-03-04":2.511,"2026-03-05":2.499,"2026-03-06":2.49,"2026-03-09":2.56,"2026-03-10":2.566,"2026-03-11":2.565,"2026-03-12":2.56,"2026-03-13":2.539,"2026-03-16":2.529,"2026-03-17":2.519,"2026-03-18":2.499,"2026-03-19":2.52,"2026-03-20":2.521,"2026-03-23":2.521,"2026-03-24":2.532,"2026-03-25":2.531,"2026-03-26":2.531,"2026-03-27":2.521,"2026-03-30":2.512,"2026-03-31":2.584,"2026-04-01":2.541,"2026-04-02":2.49,"2026-04-03":2.49,"2026-04-04":2.49,"2026-04-07":2.473,"2026-04-08":2.473,"2026-04-09":2.473,"2026-04-10":2.473,"2026-04-11":2.473,"2026-04-14":2.51,"2026-04-15":2.49,"2026-04-16":2.476,"2026-04-17":2.511,"2026-04-20":2.521,"2026-04-21":2.52,"2026-04-22":2.519};
 
 // 날짜순 정렬 키 목록 (backward search용)
 const KOFR_DATES = Object.keys(KOFR_DATA).sort();
@@ -893,13 +1212,16 @@ function getKOFR(obsDate) {
   const obsStr = fmtDate(obsDate);
   if (KOFR_DATA[obsStr] !== undefined) return { rate: KOFR_DATA[obsStr], estimated: false };
   // Backward search: 관찰일 이전 가장 최근 공시 KOFR 사용 (예탁원 방식)
+  // 탐색 범위 제한 없이 전체 데이터에서 가장 최근값 사용
   let t = new Date(obsDate);
-  for (let i = 0; i < 60; i++) {
+  for (let i = 0; i < 500; i++) {
     t = addDays(t, -1);
     const ts = fmtDate(t);
     if (KOFR_DATA[ts] !== undefined) return { rate: KOFR_DATA[ts], estimated: true };
   }
-  return { rate: null, estimated: true };
+  // 500일 이전에도 없으면 전체 데이터 중 최신값 일괄 적용 (예탁원 방식)
+  const latestDate = KOFR_DATES[KOFR_DATES.length - 1];
+  return { rate: KOFR_DATA[latestDate], estimated: true };
 }
 
 // Following convention: move to next BD if holiday
@@ -1362,11 +1684,11 @@ async function fetchFromGas(silent = false) {
 
     const latest = KOFR_DATES[KOFR_DATES.length - 1];
     const msg = `✓ 자동 업데이트 완료 — KOFR 최신: ${latest}, 공휴일 ${holAdded}일 추가`;
-    showStatus(msg, 'ok');
-
-    // 패널 열기
-    document.getElementById('apiPanelBody').classList.add('open');
-    document.getElementById('apiPanelArrow').textContent = '▲ 접기';
+    if (!silent) {
+      showStatus(msg, 'ok');
+      document.getElementById('apiPanelBody').classList.add('open');
+      document.getElementById('apiPanelArrow').textContent = '▲ 접기';
+    }
 
     renderKofrStatus();
     return true;
@@ -1385,8 +1707,10 @@ function switchTab(tab) {
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
   document.getElementById('tab-' + tab).classList.add('active');
   event.target.classList.add('active');
-  if (tab === 'dash')   loadDashboard();
-  if (tab === 'chart')  loadChartData();
+  if (tab === 'market')   { loadChartData(); loadDashboard(); }
+  if (tab === 'bank')     loadBankDashboard();
+  if (tab === 'bond')     loadBondDashboard();
+  if (tab === 'forecast') loadForecast();
 
 }
 
@@ -1403,9 +1727,30 @@ function setChartStatus(state, msg) {
 }
 
 async function loadChartData() {
-  setChartStatus('loading', '데이터 로드 중...');
+  setChartStatus('loading', '최신 데이터 로드 중...');
 
-  // 내장 KOFR 데이터 + GAS 데이터 통합
+  // GAS에서 최신 KOFR 데이터 먼저 로드
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+
+  try {
+    const resp = await fetch(gasUrl + '?action=kofr');
+    if (resp.ok) {
+      const data = await resp.json();
+      if (data.kofr) {
+        Object.entries(data.kofr).forEach(([d, rate]) => {
+          if (rate > 0) KOFR_DATA[d] = rate;
+        });
+        KOFR_DATES.length = 0;
+        Object.keys(KOFR_DATA).sort().forEach(d => KOFR_DATES.push(d));
+      }
+    }
+  } catch(e) {
+    // GAS 실패 시 내장 데이터로 계속 진행
+    console.log('GAS 로드 실패, 내장 데이터 사용:', e.message);
+  }
+
+  // 내장 + GAS 데이터 통합
   chartAllData = KOFR_DATES.map(d => ({
     date: d,
     value: KOFR_DATA[d]
@@ -1416,7 +1761,8 @@ async function loadChartData() {
     return;
   }
 
-  setChartStatus('ok', `${chartAllData.length}일 데이터 로드 완료`);
+  const latest = chartAllData[chartAllData.length - 1];
+  setChartStatus('ok', `${chartAllData.length}일 데이터 로드 완료 · 최신: ${latest.date}`);
   renderChart();
   renderRecentTable();
 }
@@ -1676,8 +2022,880 @@ async function loadDashboard() {
   setDashStatus('ok', `${count}개 항목 조회 완료 · ${fmtDate(new Date())} 기준`);
 }
 
+
+// ─── 은행 경영지표 대시보드 ──────────────────────────────────────────────────
+
+const BANKS = [
+  { name: 'iM뱅크',   key: 'iM뱅크',    group: 'im',     color: '#00b4d8' },
+  { name: '하나',     key: '하나은행',   group: 'big4',   color: '#3fb950' },
+  { name: '신한',     key: '신한은행',   group: 'big4',   color: '#d29922' },
+  { name: '국민',     key: '국민은행',   group: 'big4',   color: '#f85149' },
+  { name: '우리',     key: '우리은행',   group: 'big4',   color: '#a371f7' },
+  { name: 'BNK부산',  key: 'BNK부산은행',group: 'local',  color: '#79c0ff' },
+  { name: '전북',     key: '전북은행',   group: 'local',  color: '#56d364' },
+  { name: '광주',     key: '광주은행',   group: 'local',  color: '#e3b341' },
+  { name: 'BNK경남',  key: 'BNK경남은행',group: 'local',  color: '#ff7b72' },
+];
+
+let bankData = {};
+let bankChartInstance = null;
+let currentMetric = 'roa';
+
+const METRIC_INFO = {
+  roa:   { label: 'ROA (%)',          field: 'roa',   unit: '%', desc: '총자산순이익률' },
+  roe:   { label: 'ROE (%)',          field: 'roe',   unit: '%', desc: '자기자본순이익률' },
+  nim:   { label: 'NIM (%)',          field: 'nim',   unit: '%', desc: '순이자마진' },
+  bis:   { label: 'BIS 자기자본비율(%)', field: 'bis', unit: '%', desc: 'BIS 자기자본비율' },
+  npl:   { label: '고정이하여신비율(%)', field: 'npl', unit: '%', desc: '고정이하여신비율' },
+  asset: { label: '총자산 (조원)',     field: 'asset', unit: '조', desc: '총자산' },
+};
+
+function setBankStatus(state, msg) {
+  const dot  = document.getElementById('bankDot');
+  const text = document.getElementById('bankStatusText');
+  if (dot)  dot.className  = 'dash-dot ' + state;
+  if (text) text.textContent = msg;
+}
+
+function saveBankApiKey() {
+  const key = document.getElementById('bankApiKey').value.trim();
+  if (!key) return;
+  try { localStorage.setItem('bank_api_key', key); } catch(e) {}
+  setBankStatus('ok', 'API 키 저장 완료');
+}
+
+function loadBankApiKey() {
+  try {
+    const k = localStorage.getItem('bank_api_key');
+    if (k) document.getElementById('bankApiKey').value = k;
+    return k;
+  } catch(e) { return null; }
+}
+
+async function loadBankDashboard() {
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+  const apiKey = (function(){ try { return localStorage.getItem('bank_api_key') || document.getElementById('bankApiKey').value.trim(); } catch(e) { return document.getElementById('bankApiKey').value.trim(); } })();
+
+  if (!apiKey) {
+    setBankStatus('err', 'API 키를 입력하고 저장해주세요.');
+    return;
+  }
+
+  const year    = document.getElementById('bankYear').value;
+  const quarter = document.getElementById('bankQuarter').value;
+  const baseYm  = year + quarter;
+
+  setBankStatus('loading', `${year}년 ${quarter}월 데이터 조회 중...`);
+  bankData = {};
+
+  try {
+    // GAS를 통해 은행별 경영지표 조회
+    const url = `${gasUrl}?action=bank&ym=${baseYm}&apiKey=${encodeURIComponent(apiKey)}`;
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+
+    if (json.error) throw new Error(json.error);
+    if (!json.banks || Object.keys(json.banks).length === 0) {
+      throw new Error('데이터가 없습니다. API 키 또는 조회 기간을 확인하세요.');
+    }
+
+    bankData = json.banks;
+    renderBankDashboard();
+    setBankStatus('ok', `${year}년 ${quarter}월 기준 · ${Object.keys(bankData).length}개 은행 조회 완료`);
+
+  } catch(e) {
+    setBankStatus('err', `오류: ${e.message}`);
+    console.error('Bank API error:', e);
+  }
+}
+
+function renderBankDashboard() {
+  // iM뱅크 카드 업데이트
+  const im = bankData['iM뱅크'];
+  if (im) {
+    const fmt = (v, u) => v != null ? v.toFixed(2) + u : '--';
+    document.getElementById('im-roa').textContent   = fmt(im.roa, '%');
+    document.getElementById('im-roe').textContent   = fmt(im.roe, '%');
+    document.getElementById('im-nim').textContent   = fmt(im.nim, '%');
+    document.getElementById('im-bis').textContent   = fmt(im.bis, '%');
+    document.getElementById('im-npl').textContent   = fmt(im.npl, '%');
+    document.getElementById('im-asset').textContent = im.asset != null ? (im.asset / 10000).toFixed(1) + '조' : '--';
+  }
+
+  // 비교 차트
+  showBankMetric(currentMetric);
+
+  // 전체 비교 테이블
+  renderBankTable();
+}
+
+function showBankMetric(metric) {
+  currentMetric = metric;
+  document.querySelectorAll('[id^="cmpBtn-"]').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('cmpBtn-' + metric);
+  if (btn) btn.classList.add('active');
+
+  const info   = METRIC_INFO[metric];
+  const labels = BANKS.map(b => b.name);
+  const values = BANKS.map(b => {
+    const d = bankData[b.key];
+    if (!d || d[metric] == null) return null;
+    return metric === 'asset' ? Math.round(d[metric] / 1000) / 10 : d[metric];
+  });
+  const colors = BANKS.map(b => b.color);
+
+  if (bankChartInstance) { bankChartInstance.destroy(); bankChartInstance = null; }
+
+  const canvas = document.getElementById('bankChart');
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+
+  bankChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: info.label,
+        data: values,
+        backgroundColor: colors.map((c, i) => BANKS[i].key === 'iM뱅크' ? c : c + '99'),
+        borderColor: colors,
+        borderWidth: BANKS.map(b => b.key === 'iM뱅크' ? 2 : 1),
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#161b22',
+          borderColor: '#30363d',
+          borderWidth: 1,
+          titleColor: '#8b949e',
+          bodyColor: '#e6edf3',
+          titleFont: { family: 'IBM Plex Mono', size: 11 },
+          bodyFont:  { family: 'IBM Plex Mono', size: 13 },
+          callbacks: {
+            label: item => ` ${info.label}: ${item.raw != null ? item.raw + info.unit : '-'}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid:  { display: false },
+          ticks: { color: '#8b949e', font: { family: 'IBM Plex Mono', size: 11 } }
+        },
+        y: {
+          grid:  { color: 'rgba(48,54,61,0.5)' },
+          ticks: { color: '#6e7681', font: { family: 'IBM Plex Mono', size: 10 },
+                   callback: v => v + info.unit }
+        }
+      }
+    }
+  });
+}
+
+function renderBankTable() {
+  const groupLabel = { im: '★ iM뱅크', big4: '시중은행', local: '지역은행' };
+  const tbody = document.getElementById('bankTableBody');
+
+  const rows = BANKS.map(b => {
+    const d = bankData[b.key];
+    const isIM = b.key === 'iM뱅크';
+    const fmt = (v, dec=2) => v != null ? v.toFixed(dec) : '-';
+    const assetTri = d?.asset != null ? (d.asset / 10000).toFixed(1) : '-';
+
+    // iM뱅크 vs 지역은행 평균 비교 색상
+    const localBanks = BANKS.filter(x => x.group === 'local' && x.key !== 'iM뱅크');
+    const avgLocal = (field) => {
+      const vals = localBanks.map(x => bankData[x.key]?.[field]).filter(v => v != null);
+      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
+    };
+
+    const roaColor = isIM && d?.roa != null && avgLocal('roa') != null
+      ? (d.roa >= avgLocal('roa') ? 'var(--green)' : 'var(--red)') : 'var(--text)';
+
+    return `<tr style="${isIM ? 'background:rgba(0,180,216,0.06);' : ''}">
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 color:${isIM ? 'var(--accent)' : 'var(--text)'};font-weight:${isIM ? '700' : '400'};">
+        ${isIM ? '★ ' : ''}${b.name}
+      </td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:11px;border-bottom:1px solid var(--border);
+                 text-align:center;color:var(--text3);">
+        ${b.group === 'im' ? 'iM뱅크' : b.group === 'big4' ? '시중' : '지역'}
+      </td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;color:${roaColor};">${fmt(d?.roa)}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;">${fmt(d?.roe)}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;">${fmt(d?.nim)}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;">${fmt(d?.bis)}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;">${fmt(d?.npl)}</td>
+      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 text-align:right;">${assetTri}</td>
+    </tr>`;
+  }).join('');
+
+  tbody.innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>';
+}
+
+
+// ─── 채권 발행내역 대시보드 ──────────────────────────────────────────────────
+
+let bondAllData = [];
+let bondChartInstance = null;
+
+const BOND_BANK_COLORS = {
+  '국민은행':  'rgb(247,198,0)',
+  '신한은행':  'rgb(35,69,216)',
+  '하나은행':  'rgb(1,135,120)',
+  '우리은행':  'rgb(2,93,166)',
+  'iM뱅크':   'rgb(0,193,165)',
+  '부산은행':  'rgb(206,24,33)',
+  '경남은행':  'rgb(230,0,136)',
+  '광주은행':  'rgb(0,79,152)',
+  '전북은행':  'rgb(0,121,189)',
+};
+
+const BOND_BANK_ORDER = [
+  '신한은행','국민은행','하나은행','우리은행',
+  'iM뱅크','부산은행','경남은행','전북은행','광주은행'
+];
+
+function setBondStatus(state, msg) {
+  const dot  = document.getElementById('bondDot');
+  const text = document.getElementById('bondStatusText');
+  if (dot)  dot.className  = 'dash-dot ' + state;
+  if (text) text.textContent = msg;
+}
+
+async function loadBondDashboard() {
+  setBondStatus('loading', '채권 발행내역 로드 중...');
+  
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+
+  try {
+    const resp = await fetch(gasUrl + '?action=bond_issuance');
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const json = await resp.json();
+    
+    if (!json.bondIssuance || json.bondIssuance.length === 0) {
+      setBondStatus('err', '데이터 없음 — GAS에서 loadInitialBondData 실행 후 재배포 필요');
+      return;
+    }
+    
+    bondAllData = json.bondIssuance;
+    
+    // 기본 날짜 범위 설정 (데이터 최소~최대)
+    const dates = bondAllData.map(d => d.issueDate).sort();
+    const fromEl = document.getElementById('bondFromDate');
+    const toEl   = document.getElementById('bondToDate');
+    if (fromEl && !fromEl.value) fromEl.value = dates[0];
+    if (toEl   && !toEl.value)   toEl.value   = dates[dates.length-1];
+    
+    renderBondDashboard();
+    setBondStatus('ok', `총 ${bondAllData.length}건 로드 완료`);
+    
+  } catch(e) {
+    setBondStatus('err', `오류: ${e.message}`);
+  }
+}
+
+function getFilteredBondData() {
+  const fromDate   = document.getElementById('bondFromDate')?.value || '';
+  const toDate     = document.getElementById('bondToDate')?.value   || '';
+  const bankFilter = document.getElementById('bondBankFilter')?.value || 'all';
+  const typeFilter = document.getElementById('bondTypeFilter')?.value || 'all';
+  
+  return bondAllData.filter(d => {
+    if (fromDate && d.issueDate < fromDate) return false;
+    if (toDate   && d.issueDate > toDate)   return false;
+    if (bankFilter !== 'all' && d.bank !== bankFilter) return false;
+    if (typeFilter === 'kofr'   && d.kofr !== 'O') return false;
+    if (typeFilter === '변동' && (d.itype !== '변동' || d.kofr === 'O')) return false;
+    if (typeFilter === '고정'   && d.itype !== '고정') return false;
+    return true;
+  });
+}
+
+function renderBondDashboard() {
+  const data = getFilteredBondData();
+  
+  // 요약 카드
+  const total    = data.reduce((s,d) => s + (d.amt||0), 0);
+  const kofrData = data.filter(d => d.kofr === 'O');
+  const varData  = data.filter(d => d.itype === '변동' && d.kofr !== 'O');
+  const fixData  = data.filter(d => d.itype === '고정');
+  const kofrAmt  = kofrData.reduce((s,d) => s + (d.amt||0), 0);
+  const varAmt   = varData.reduce((s,d)  => s + (d.amt||0), 0);
+  const fixAmt   = fixData.reduce((s,d)  => s + (d.amt||0), 0);
+  const avgSpread = kofrData.length > 0
+    ? (kofrData.reduce((s,d) => s + (d.spread||0), 0) / kofrData.length).toFixed(3)
+    : '--';
+  
+  document.getElementById('bond-total-amt').textContent = total.toLocaleString() + '억';
+  document.getElementById('bond-total-cnt').textContent = `${data.length}건`;
+  document.getElementById('bond-kofr-amt').textContent  = kofrAmt.toLocaleString() + '억';
+  document.getElementById('bond-kofr-cnt').textContent  = `${kofrData.length}건`;
+  document.getElementById('bond-var-amt').textContent   = varAmt.toLocaleString() + '억';
+  document.getElementById('bond-var-cnt').textContent   = `${varData.length}건`;
+  document.getElementById('bond-fix-amt').textContent   = fixAmt.toLocaleString() + '억';
+  document.getElementById('bond-fix-cnt').textContent   = `${fixData.length}건`;
+  document.getElementById('bond-avg-spread').textContent = avgSpread === '--' ? '--' : avgSpread + '%';
+  
+  // 은행별 집계
+  const bankTotals = {};
+  data.forEach(d => {
+    if (!bankTotals[d.bank]) bankTotals[d.bank] = { total:0, kofr:0, var:0, fix:0 };
+    bankTotals[d.bank].total += d.amt||0;
+    if (d.kofr === 'O')           bankTotals[d.bank].kofr += d.amt||0;
+    else if (d.itype === '변동')  bankTotals[d.bank].var  += d.amt||0;
+    else                           bankTotals[d.bank].fix  += d.amt||0;
+  });
+  
+  // 차트
+  renderBondChart(bankTotals);
+  
+  // 테이블 (발행일 내림차순)
+  const sorted = [...data].sort((a,b) => b.issueDate.localeCompare(a.issueDate));
+  const tbody = document.getElementById('bondTableBody');
+  tbody.innerHTML = sorted.map(d => {
+    const isKofr = d.kofr === 'O';
+    const typeColor = isKofr ? '#00fff7' : d.itype === '변동' ? '#1a6aff' : '#4a5568';
+    const typeTxt   = isKofr ? '#00fff7' : d.itype === '변동' ? '#1a6aff' : '#4a5568';
+    return `<tr style="${isKofr ? 'background:rgba(0,255,247,0.04);border-left:2px solid #00fff7;' : ''}">
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
+                 color:${isKofr ? '#00fff7' : BOND_BANK_COLORS[d.bank]||'var(--text)'};font-weight:600;
+                 ${isKofr ? 'text-shadow:0 0 8px rgba(0,255,247,0.4);' : ''}">${d.bank}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:center;
+                 color:${isKofr ? '#00fff7' : 'var(--text)'};">${d.issueDate}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:center;color:var(--text3);">${d.matDate}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:right;
+                 color:${isKofr ? '#00fff7' : 'var(--text)'};">${(d.amt||0).toLocaleString()}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:center;color:${typeTxt};">${d.itype}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:center;
+                 color:${isKofr ? '#00fff7' : 'var(--text3)'};${isKofr ? 'text-shadow:0 0 6px rgba(0,255,247,0.5);' : ''}">${d.kofr||'-'}</td>
+      <td style="padding:8px 12px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);text-align:right;
+                 color:${isKofr ? '#00fff7' : 'var(--text3)'};${isKofr ? 'text-shadow:0 0 6px rgba(0,255,247,0.5);' : ''}">${isKofr ? d.spread+'%' : '-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderBondChart(bankTotals) {
+  if (bondChartInstance) { bondChartInstance.destroy(); bondChartInstance = null; }
+  
+  const seen = new Set();
+  const banks = BOND_BANK_ORDER.filter(b => {
+    if (bankTotals[b] && !seen.has(b)) { seen.add(b); return true; }
+    return false;
+  }).concat(Object.keys(bankTotals).filter(b => !seen.has(b)));
+  const colors = banks.map(b => BOND_BANK_COLORS[b] || '#8b949e');
+  
+  const canvas = document.getElementById('bondChart');
+  canvas.height = 300;
+  const ctx = canvas.getContext('2d');
+  
+  // KOFR 비율 레이블 플러그인 등록
+  const kofrRatioPlugin = {
+    id: 'kofrRatioLabel',
+    afterDatasetsDraw(chart) {
+      const { ctx, data, scales: { x, y } } = chart;
+      const kofrDs = chart.data.datasets[0];
+      const varDs  = chart.data.datasets[1];
+      const fixDs  = chart.data.datasets[2];
+      if (!kofrDs || !varDs) return;
+      data.labels.forEach((label, i) => {
+        const kofrAmt = kofrDs.data[i] || 0;
+        const varAmt  = varDs.data[i]  || 0;
+        const total   = kofrAmt + varAmt;
+        if (total === 0 || kofrAmt === 0) return;
+        const ratio = (kofrAmt / total * 100).toFixed(1);
+        const xPos  = x.getPixelForValue(i);
+        const yPos  = y.getPixelForValue(
+          kofrAmt + varAmt + (fixDs?.data[i] || 0)
+        ) - 8;
+        ctx.save();
+        ctx.font = 'bold 11px monospace';
+        ctx.fillStyle = '#00fff7';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = 'rgba(0,255,247,0.7)';
+        ctx.shadowBlur = 8;
+        ctx.fillText(ratio + '%', xPos, yPos);
+        ctx.restore();
+      });
+      
+      // 우측 상단 주석
+      ctx.save();
+      ctx.font = '10px monospace';
+      ctx.fillStyle = 'rgba(0,255,247,0.45)';
+      ctx.textAlign = 'right';
+      ctx.fillText('* KOFR FRN비율: KOFR FRN / 변동금리채 금액(KOFR 포함) × 100', chart.width - 10, 18);
+      ctx.restore();
+    }
+  };
+
+  bondChartInstance = new Chart(ctx, {
+    type: 'bar',
+    plugins: [kofrRatioPlugin],
+    data: {
+      labels: banks,
+      datasets: [
+        {
+          label: 'KOFR FRN',
+          data: banks.map(b => bankTotals[b].kofr),
+          backgroundColor: 'rgba(0,255,247,0.85)',
+          borderColor: 'rgba(0,255,247,0.5)',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '변동금리',
+          data: banks.map(b => bankTotals[b].var),
+          backgroundColor: 'rgba(26,106,255,0.7)',
+          borderColor: '#1a6aff',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+        {
+          label: '고정금리',
+          data: banks.map(b => bankTotals[b].fix),
+          backgroundColor: 'rgba(74,85,104,0.5)',
+          borderColor: '#4a5568',
+          borderWidth: 1,
+          borderRadius: 4,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 800, easing: 'easeOutQuart' },
+      plugins: {
+        legend: {
+          display: true,
+          labels: { 
+            color: '#8b949e', 
+            font: { family: 'IBM Plex Mono', size: 11 },
+            usePointStyle: true,
+            pointStyleWidth: 10,
+            generateLabels: chart => chart.data.datasets.map((ds, i) => ({
+              text: ds.label,
+              fillStyle: ds.borderColor,
+              strokeStyle: ds.borderColor,
+              lineWidth: 1,
+              pointStyle: 'rectRounded',
+              hidden: false,
+              datasetIndex: i,
+              fontColor: ds.label === 'KOFR FRN' ? '#00fff7' : ds.label === '변동금리' ? '#1a6aff' : '#4a5568',
+            }))
+          }
+        },
+        tooltip: {
+          backgroundColor: 'rgba(10,15,25,0.95)',
+          borderColor: '#00fff7',
+          borderWidth: 1,
+          titleColor: '#00fff7',
+          bodyColor: '#a0b4c8',
+          padding: 10,
+          callbacks: {
+            title: items => items[0].label,
+            label: item => {
+              const isKofr = item.dataset.label === 'KOFR FRN';
+              const prefix = isKofr ? ' ⚡ ' : '   ';
+              return `${prefix}${item.dataset.label}: ${item.raw.toLocaleString()}억`;
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          stacked: true,
+          grid: { display: false },
+          border: { color: '#0d2137' },
+          ticks: {
+            font: { family: 'IBM Plex Mono', size: 12, weight: '600' },
+            color: ctx => {
+              const bank = ctx.tick.label;
+              return BOND_BANK_COLORS[bank] || '#8b949e';
+            }
+          }
+        },
+        y: {
+          stacked: true,
+          grid: { color: 'rgba(0,30,60,0.6)', lineWidth: 1 },
+          border: { color: '#0d2137', dash: [4,4] },
+          ticks: { color: '#4a6a8a', font: { family: 'IBM Plex Mono', size: 10 },
+                   callback: v => v.toLocaleString() + '억' }
+        }
+      }
+    }
+  });
+}
+
+// 필터 변경 시 즉시 반영
+document.addEventListener('DOMContentLoaded', () => {
+  ['bondFromDate','bondToDate','bondBankFilter','bondTypeFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('change', () => { if (bondAllData.length) renderBondDashboard(); });
+  });
+});
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🔮 금리 예측 · 조달 대응 탭
+// ═══════════════════════════════════════════════════════════════════════════════
+
+let forecastLoaded = false;
+let forecastChartInstance = null;
+
+async function loadForecast() {
+  if (forecastLoaded) return;
+  forecastLoaded = true;
+  setForecastStatus('loading', '금리 데이터 수집 중...');
+
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
+
+  try {
+    // 1) GAS에서 forecast 데이터 (기준금리+KOFR+CD+국고채 시계열) 가져오기
+    const resp = await fetch(gasUrl + '?action=forecast');
+    if (!resp.ok) throw new Error('GAS forecast 응답 오류');
+    const data = await resp.json();
+
+    if (!data.forecast) throw new Error('forecast 데이터 없음');
+
+    setForecastStatus('loading', '예측 모델 계산 중...');
+
+    // 2) 예측값 계산 (룰베이스: 선형회귀 + 한은 사이클 반영)
+    const prediction = computePrediction(data.forecast);
+
+    // 3) 그래프 렌더링
+    renderForecastChart(data.forecast, prediction);
+
+    // 4) Claude API로 해설 + 조달전략 + 시나리오 생성
+    setForecastStatus('loading', 'AI 분석 생성 중...');
+    await generateAiAnalysis(data.forecast, prediction, gasUrl);
+
+    setForecastStatus('ok', `데이터 기준: ${data.updated || '최신'}`);
+
+  } catch(e) {
+    setForecastStatus('err', `오류: ${e.message}`);
+    console.error('forecast 오류:', e);
+    // 오류 시 내장 데이터로 폴백
+    fallbackForecast();
+  }
+}
+
+// ─── 예측 계산 (룰베이스) ────────────────────────────────────────────────────
+function computePrediction(forecast) {
+  // base: KOFR 최근값
+  const kofr  = forecast.kofr  || [];
+  const base_  = forecast.base  || [];
+  const cd     = forecast.cd    || [];
+  const gb3    = forecast.gb3   || [];
+
+  const latestKofr = kofr.length  ? kofr[kofr.length-1].v   : 2.75;
+  const latestBase = base_.length ? base_[base_.length-1].v  : 2.75;
+  const latestCd   = cd.length    ? cd[cd.length-1].v        : 2.80;
+  const latestGb3  = gb3.length   ? gb3[gb3.length-1].v      : 2.70;
+
+  // 추세: 최근 3개월 KOFR 평균 변화
+  const recentKofr = kofr.slice(-3).map(d => d.v);
+  const trend = recentKofr.length >= 2
+    ? (recentKofr[recentKofr.length-1] - recentKofr[0]) / (recentKofr.length - 1)
+    : 0;
+
+  // 기준금리와 KOFR 스프레드 (KOFR는 보통 기준금리보다 약간 낮음)
+  const spread = latestKofr - latestBase;
+
+  // 한은 통방 사이클 반영: 기준금리가 KOFR보다 높으면 인하 가능성
+  const cutBias = latestBase > latestKofr + 0.1 ? -0.05 : 0;
+
+  // 3개월/6개월/12개월 예측
+  const p3m  = Math.max(1.0, Math.round((latestKofr + trend * 3 + cutBias) * 100) / 100);
+  const p6m  = Math.max(1.0, Math.round((latestKofr + trend * 6 + cutBias * 2) * 100) / 100);
+  const p12m = Math.max(1.0, Math.round((latestKofr + trend * 12 + cutBias * 3) * 100) / 100);
+
+  return {
+    latestKofr, latestBase, latestCd, latestGb3,
+    trend: Math.round(trend * 10000) / 10000,
+    p3m, p6m, p12m,
+    direction: trend > 0.01 ? '상승' : trend < -0.01 ? '하락' : '보합',
+    spreadToBase: Math.round(spread * 100) / 100,
+  };
+}
+
+// ─── 예측 차트 렌더링 ────────────────────────────────────────────────────────
+function renderForecastChart(forecast, pred) {
+  const ctx = document.getElementById('forecastChartCanvas');
+  if (!ctx) return;
+  if (forecastChartInstance) { forecastChartInstance.destroy(); forecastChartInstance = null; }
+
+  const kofr  = (forecast.kofr  || []).slice(-18); // 최근 18개월
+  const base_  = (forecast.base  || []).slice(-18);
+  const cd     = (forecast.cd    || []).slice(-18);
+  const gb3    = (forecast.gb3   || []).slice(-18);
+
+  // 예측 점선 데이터 포인트 생성 (마지막 실제값 + 3/6/12개월 후)
+  const lastDate = kofr.length ? kofr[kofr.length-1].t : '';
+  const predLabels = [lastDate, '+3M', '+6M', '+12M'];
+  const predValues = [pred.latestKofr, pred.p3m, pred.p6m, pred.p12m];
+
+  // 실제 레이블 (월별)
+  const allLabels = kofr.map(d => d.t.slice(0,7));
+  const chartLabels = [...allLabels, '+3M', '+6M', '+12M'];
+
+  // 각 시리즈를 레이블에 맞게 정렬
+  const alignSeries = (arr) => {
+    const map = {};
+    arr.forEach(d => { map[d.t.slice(0,7)] = d.v; });
+    return allLabels.map(l => map[l] ?? null);
+  };
+
+  const kofrData  = alignSeries(kofr);
+  const baseData  = alignSeries(base_);
+  const cdData    = alignSeries(cd);
+  const gb3Data   = alignSeries(gb3);
+
+  // 예측 데이터: 실제 구간은 null, 예측 구간만 값
+  const predData = [...Array(allLabels.length - 1).fill(null), pred.latestKofr, pred.p3m, pred.p6m, pred.p12m];
+
+  forecastChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: chartLabels,
+      datasets: [
+        {
+          label: 'KOFR',
+          data: [...kofrData, null, null, null],
+          borderColor: '#00b4d8',
+          backgroundColor: 'rgba(0,180,216,0.08)',
+          borderWidth: 2,
+          pointRadius: 2,
+          tension: 0.3,
+          fill: true,
+        },
+        {
+          label: '기준금리',
+          data: [...baseData, null, null, null],
+          borderColor: '#f85149',
+          borderWidth: 1.5,
+          pointRadius: 2,
+          tension: 0.3,
+          borderDash: [],
+        },
+        {
+          label: 'CD(91일)',
+          data: [...cdData, null, null, null],
+          borderColor: '#d29922',
+          borderWidth: 1.5,
+          pointRadius: 2,
+          tension: 0.3,
+        },
+        {
+          label: '국고채(3년)',
+          data: [...gb3Data, null, null, null],
+          borderColor: '#3fb950',
+          borderWidth: 1.5,
+          pointRadius: 2,
+          tension: 0.3,
+        },
+        {
+          label: 'KOFR 예측',
+          data: predData,
+          borderColor: '#00b4d8',
+          borderWidth: 2,
+          borderDash: [6, 4],
+          pointRadius: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,5,5,5,5],
+          pointBackgroundColor: '#00b4d8',
+          tension: 0.3,
+          fill: false,
+        },
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: {
+          labels: { color: '#8b949e', font: { family: 'IBM Plex Mono', size: 11 }, boxWidth: 20 }
+        },
+        tooltip: {
+          backgroundColor: '#161b22',
+          borderColor: '#30363d',
+          borderWidth: 1,
+          titleColor: '#e6edf3',
+          bodyColor: '#8b949e',
+          callbacks: {
+            label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y !== null ? ctx.parsed.y.toFixed(2) + '%' : '-'}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#6e7681', font: { family: 'IBM Plex Mono', size: 10 }, maxTicksLimit: 12 },
+          grid: { color: '#21262d' }
+        },
+        y: {
+          ticks: { color: '#6e7681', font: { family: 'IBM Plex Mono', size: 10 },
+                   callback: v => v.toFixed(2) + '%' },
+          grid: { color: '#21262d' }
+        }
+      }
+    }
+  });
+
+  // 예측 수치 카드 업데이트
+  document.getElementById('fc-kofr-now').textContent  = pred.latestKofr.toFixed(2) + '%';
+  document.getElementById('fc-kofr-3m').textContent   = pred.p3m.toFixed(2) + '%';
+  document.getElementById('fc-kofr-6m').textContent   = pred.p6m.toFixed(2) + '%';
+  document.getElementById('fc-kofr-12m').textContent  = pred.p12m.toFixed(2) + '%';
+  document.getElementById('fc-base-now').textContent  = pred.latestBase.toFixed(2) + '%';
+  document.getElementById('fc-cd-now').textContent    = pred.latestCd.toFixed(2) + '%';
+  document.getElementById('fc-gb3-now').textContent   = pred.latestGb3.toFixed(2) + '%';
+  document.getElementById('fc-direction').textContent = pred.direction;
+  const dirEl = document.getElementById('fc-direction');
+  dirEl.style.color = pred.direction === '상승' ? '#f85149' : pred.direction === '하락' ? '#3fb950' : '#d29922';
+}
+
+// ─── Claude API (GAS 프록시) 호출 ────────────────────────────────────────────
+// ─── 룰베이스 분석 생성 (Claude API 없이 동작) ────────────────────────────────
+// ※ 향후 Claude API 키 발급 시 이 함수만 API 호출로 교체하면 됨
+
+async function generateAiAnalysis(forecast, pred, gasUrl) {
+  // 룰베이스로 즉시 분석 생성 (비동기 불필요하지만 인터페이스 통일)
+  renderRulebasedAnalysis(pred);
+}
+
+function renderRulebasedAnalysis(pred) {
+  const dir      = pred.direction;        // '상승' | '하락' | '보합'
+  const kofr     = pred.latestKofr;
+  const base_    = pred.latestBase;
+  const cd       = pred.latestCd;
+  const gb3      = pred.latestGb3;
+  const spread   = pred.spreadToBase;    // KOFR - 기준금리
+  const trend    = pred.trend;
+
+  // ── 1. 차트 해설 ──────────────────────────────────────────────────────────
+  let chartReason = '';
+  if (dir === '하락') {
+    chartReason = `KOFR는 최근 ${Math.abs(trend * 100).toFixed(1)}bp/월 속도로 하락 중입니다. `
+      + `기준금리(${base_.toFixed(2)}%)와의 스프레드는 ${Math.abs(spread * 100).toFixed(0)}bp로, `
+      + `한은의 완화적 통화정책 기조가 단기금리 전반에 반영되고 있습니다. `
+      + `CD(${cd.toFixed(2)}%), 국고채 3년(${gb3.toFixed(2)}%)도 동반 하락하며 `
+      + `시장금리 전반의 하향 압력이 확인됩니다.`;
+  } else if (dir === '상승') {
+    chartReason = `KOFR는 최근 ${(trend * 100).toFixed(1)}bp/월 속도로 상승 중입니다. `
+      + `기준금리(${base_.toFixed(2)}%)와의 스프레드는 ${Math.abs(spread * 100).toFixed(0)}bp이며, `
+      + `시장의 긴축 기대 또는 유동성 축소가 단기금리 상승 압력으로 작용하고 있습니다. `
+      + `국고채 3년(${gb3.toFixed(2)}%)의 움직임과 함께 금리 커브 전반의 상방 압력이 관찰됩니다.`;
+  } else {
+    chartReason = `KOFR는 ${kofr.toFixed(2)}% 수준에서 안정적인 보합세를 유지하고 있습니다. `
+      + `기준금리(${base_.toFixed(2)}%)와의 스프레드는 ${Math.abs(spread * 100).toFixed(0)}bp로 `
+      + `정상 범위 내에 있으며, CD(${cd.toFixed(2)}%), 국고채 3년(${gb3.toFixed(2)}%) 등 `
+      + `시장금리도 뚜렷한 방향성 없이 횡보하는 양상입니다.`;
+  }
+
+  // ── 2. 조달 전략 ──────────────────────────────────────────────────────────
+  let termStrategy = '', typeStrategy = '', instrumentStrategy = '';
+
+  if (dir === '하락') {
+    // 금리 하락 국면: 장기 고정 유리
+    termStrategy   = '【중장기(1~2년) 비중 확대 권고】 금리 하락 국면에서는 현재 수준의 낮은 금리를 장기간 확보하는 것이 유리합니다. 단기 롤오버 비중을 줄이고 중장기 조달로 금리 리스크를 헤지하는 전략을 권고합니다.';
+    typeStrategy   = '【고정금리 비중 확대】 KOFR 하락 추세 지속 시 변동금리(KOFR FRN) 조달 비용이 낮아지나, 추가 인하 여지 소진 후 반등 시 리스크가 있습니다. 현 수준에서 고정금리 채권 비중을 높여 조달비용을 확정하는 전략이 유효합니다.';
+    instrumentStrategy = '【금융채(고정) + CD 혼합】 장기 자금은 고정금리 금융채로 확보하고, 단기 운용 자금은 CD로 유연하게 운용하는 바벨(Barbell) 전략을 권고합니다. KOFR FRN은 스프레드 메리트가 있을 때 선택적으로 활용하세요.';
+  } else if (dir === '상승') {
+    // 금리 상승 국면: 단기 변동 유리
+    termStrategy   = '【단기(6개월~1년) 위주 조달 권고】 금리 상승 국면에서 장기 고정 조달은 비용 고정 리스크가 있습니다. 단기 조달로 금리 상승을 부분 흡수하면서, 고점 확인 후 장기로 전환하는 전략을 권고합니다.';
+    typeStrategy   = '【KOFR FRN 변동금리 활용 검토】 금리 상승기에는 고정금리보다 변동금리(KOFR FRN) 조달이 상대적으로 유리할 수 있습니다. 단, 스프레드 수준과 시장 수요를 확인 후 발행을 결정하세요.';
+    instrumentStrategy = '【CD + 단기 금융채 혼합】 단기 CD로 급격한 금리 상승 구간을 넘기고, 금리 안정 확인 후 중기 금융채로 전환하는 전략을 권고합니다. 예금은 수신 금리 부담이 가중될 수 있어 선별적 활용이 필요합니다.';
+  } else {
+    // 보합 국면: 균형 전략
+    termStrategy   = '【단·중기 혼합(래더링) 전략 권고】 금리 보합 국면에서는 만기를 분산하여 롤오버 리스크를 줄이는 래더링(Laddering) 전략이 유효합니다. 6개월~1년 단기와 1~2년 중기를 균형 있게 구성하세요.';
+    typeStrategy   = '【고정·변동 혼합 전략】 방향성이 불명확한 보합 국면에서는 고정금리와 KOFR FRN 변동금리를 5:5 수준으로 혼합하여 금리 리스크를 분산하는 전략을 권고합니다.';
+    instrumentStrategy = '【금융채 + CD + KOFR FRN 균형 배분】 금리 보합 시에는 특정 조달수단 집중을 지양하고, 금융채·CD·KOFR FRN을 균형 있게 활용하여 조달 포트폴리오를 다변화하는 것이 리스크 관리에 유리합니다.';
+  }
+
+  // ── 3. 시나리오 ───────────────────────────────────────────────────────────
+  const scenarios = [
+    {
+      name: '기준금리 동결',
+      kofr: kofr.toFixed(2),
+      style: 'neutral',
+      strategy: `KOFR ${kofr.toFixed(2)}% 수준 유지 전망. 현재 조달 믹스를 유지하되, 시장 스프레드 변동에 주의하며 KOFR FRN 발행 타이밍을 조율하세요. 단기 CD 비중을 일정 수준 유지하여 유동성을 확보하는 것이 안전합니다.`
+    },
+    {
+      name: '1회 인하 (-25bp)',
+      kofr: (kofr - 0.25).toFixed(2),
+      style: 'mild',
+      strategy: `KOFR ${(kofr - 0.25).toFixed(2)}% 수준 예상. 인하 전 고정금리 조달 비중을 선제적으로 높이고, KOFR FRN 스프레드 수준을 재검토하세요. 운용 자산은 단기보다 중기 채권으로 듀레이션을 소폭 확대하는 것이 유리합니다.`
+    },
+    {
+      name: '2회 이상 인하 (-50bp↑)',
+      kofr: (kofr - 0.50).toFixed(2),
+      style: 'deep',
+      strategy: `KOFR ${(kofr - 0.50).toFixed(2)}% 이하 예상. 고정금리 장기 조달 비중을 대폭 확대하여 저금리 환경을 최대한 활용하세요. KOFR FRN 발행은 스프레드 메리트 확인 후 선별 발행하고, 운용 자산 듀레이션을 장기로 확대하여 자본이득을 극대화하는 전략이 유효합니다.`
+    }
+  ];
+
+  // ── DOM 렌더링 ─────────────────────────────────────────────────────────────
+  const reasonEl = document.getElementById('fc-chart-reason');
+  if (reasonEl) reasonEl.textContent = chartReason;
+
+  document.getElementById('fc-proc-term').textContent       = termStrategy;
+  document.getElementById('fc-proc-type').textContent       = typeStrategy;
+  document.getElementById('fc-proc-instrument').textContent = instrumentStrategy;
+
+  const scenContainer = document.getElementById('fc-scenarios');
+  if (scenContainer) {
+    scenContainer.innerHTML = scenarios.map(s => `
+      <div class="fc-scenario-card ${s.style}">
+        <div class="fc-sc-name">${s.name}</div>
+        <div class="fc-sc-kofr">KOFR 예상 → <strong>${s.kofr}%</strong></div>
+        <div class="fc-sc-strategy">${s.strategy}</div>
+      </div>
+    `).join('');
+  }
+}
+
+function fallbackForecast() {
+  // GAS 없을 때 내장 KOFR 데이터로 차트만 그림
+  const kofrArr = KOFR_DATES.slice(-18).map(d => ({ t: d, v: KOFR_DATA[d] }));
+  const pred = computePrediction({ kofr: kofrArr, base: [], cd: [], gb3: [] });
+  renderForecastChart({ kofr: kofrArr, base: [], cd: [], gb3: [] }, pred);
+  renderFallbackAnalysis(pred);
+  setForecastStatus('warn', '내장 데이터 사용 중 (GAS 연결 필요)');
+}
+
+function setForecastStatus(state, msg) {
+  const dot  = document.getElementById('fcDot');
+  const text = document.getElementById('fcStatusText');
+  if (dot)  dot.className  = 'dash-dot ' + state;
+  if (text) text.textContent = msg;
+}
+
+function refreshForecast() {
+  forecastLoaded = false;
+  if (forecastChartInstance) { forecastChartInstance.destroy(); forecastChartInstance = null; }
+  ['fc-chart-reason','fc-proc-term','fc-proc-type','fc-proc-instrument'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = '';
+  });
+  const sc = document.getElementById('fc-scenarios');
+  if (sc) sc.innerHTML = '';
+  loadForecast();
+}
+
 window.addEventListener('load', async () => {
   loadKeys();
+  loadBankApiKey();
   // GAS URL 로컬 저장 시도 (차단돼도 기본값으로 동작)
   const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
   try {
