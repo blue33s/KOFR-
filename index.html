@@ -1256,9 +1256,9 @@
 
     <!-- 시나리오 -->
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px;">
-      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-        <div style="font-size:13px;color:var(--text);font-weight:700;">🎲 향후 시나리오별 대응</div>
-        <div id="fc-prob-bar-header" style="min-width:260px;"></div>
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;">
+        <div style="font-size:13px;color:var(--text);font-weight:700;white-space:nowrap;">🎲 향후 시나리오별 대응</div>
+        <div id="fc-prob-bar-header" style="width:240px;"></div>
       </div>
       <div id="fc-scenarios" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;">
         <div style="text-align:center;color:var(--text3);font-family:var(--mono);font-size:12px;padding:24px;">로드 중...</div>
@@ -3287,10 +3287,15 @@ function renderScenarios(pred, totalScore) {
 
   const scenarios = [
     {
+      name:      `기준금리 인하 (-25bp → ${(base-0.25).toFixed(2)}%)`,
+      prob:      `${pCut}%`, probColor: cutColor,
+      kofrLabel: kofrCut, style: 'mild',
+      strategy:  `인하 시 KOFR 동반 하락 예상. 인하 전 고정금리 선제 확정 후, 인하 이후에는 KOFR FRN 비중 확대 전환 검토. CD 단기 활용 병행.`
+    },
+    {
       name:      `기준금리 동결 (현행 ${base.toFixed(2)}% 유지)`,
       prob:      `${pHold}%`, probColor: holdColor,
       kofrLabel: kofrHold, style: 'neutral',
-      bar:       probBar(pHike, pHold, pCut),
       strategy:  totalScore >= 3
         ? `고금리 유지 환경. 고정금리 조달 비중 확대 기회 활용. KOFR FRN은 스프레드 메리트 확인 후 선별 발행.`
         : `현 조달 믹스 유지. 시장 스프레드 변동 모니터링하며 기회 발생 시 장기 고정금리 확정.`
@@ -3299,15 +3304,7 @@ function renderScenarios(pred, totalScore) {
       name:      `기준금리 인상 (+25bp → ${(base+0.25).toFixed(2)}%)`,
       prob:      `${pHike}%`, probColor: hikeColor,
       kofrLabel: kofrHike, style: 'deep',
-      bar:       probBar(pHike, pHold, pCut),
       strategy:  `인상 전 고정금리 조달 선제 확정 필수. KOFR FRN 발행 최소화. 장기 고정금융채 비중 최대화하여 조달비용 상승 헤지.`
-    },
-    {
-      name:      `기준금리 인하 (-25bp → ${(base-0.25).toFixed(2)}%)`,
-      prob:      `${pCut}%`, probColor: cutColor,
-      kofrLabel: kofrCut, style: 'mild',
-      bar:       probBar(pHike, pHold, pCut),
-      strategy:  `인하 시 KOFR 동반 하락 예상. 인하 전 고정금리 선제 확정 후, 인하 이후에는 KOFR FRN 비중 확대 전환 검토. CD 단기 활용 병행.`
     },
   ];
 
