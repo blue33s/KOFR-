@@ -2996,6 +2996,12 @@ function computePrediction(forecast) {
     p3m_cd,   p6m_cd,   p12m_cd,
     p3m_gb3,  p6m_gb3,  p12m_gb3,
     direction,
+    kofrAdvantage: _pHike >= 0.55 && sp_gb3 >= 60 ? 'strong_yes'
+                 : _pHike >= 0.30 && sp_gb3 >= 30 ? 'yes'
+                 : _pCut  >= 0.55 ? 'yes'
+                 : _pCut  >= 0.77 ? 'strong_yes'
+                 : 'neutral',
+    mktRateDirection: sp_gb3 >= 100 ? '인상 후 하락 가능' : sp_gb3 >= 60 ? '소폭 상승 예상' : sp_gb3 < 0 ? '하락 예상' : '보합 예상',
     spreadToBase: Math.round(spread*100)/100,
     sp_gb3_base:  Math.round((latestGb3  - latestBase)*100)/100,
     sp_gb5_base:  Math.round((latestGb5  - latestBase)*100)/100,
@@ -3159,66 +3165,105 @@ function recalcRulebase() {
   // 음수: 시장이 예상보다 덜 반영 (고정금리 확정 유리)
   const overPriced = Math.round((mktPricedHikes - expectedHikes) * 10) / 10;
 
-  // KOFR FRN 유불리 판단
-  // ① 인상 예상 + 과도 선반영 → KOFR FRN 유리
-  // ② 인상 예상 + 미반영      → 고정금리 확정
-  // ③ 인하 예상 + 과도 선반영 → 고정금리 확정 (시장 이미 하락 반영)
-  // ④ 인하 예상 + 미반영      → KOFR FRN 유리 (기준금리 따라 하락)
-  let kofrAdvantage; // 'strong_yes' / 'yes' / 'neutral' / 'no' / 'strong_no'
-  if (totalScore >= 3 && overPriced >= 1.5)       kofrAdvantage = 'strong_yes';  // 인상압력 + 2회 이상 과도선반영
-  else if (totalScore >= 3 && overPriced >= 0.5)  kofrAdvantage = 'yes';         // 인상압력 + 1회 이상 과도선반영
-  else if (totalScore >= 3 && overPriced < -0.5)  kofrAdvantage = 'no';          // 인상압력 + 시장 미반영
-  else if (totalScore <= -3 && overPriced >= 0.5) kofrAdvantage = 'no';          // 인하압력 + 시장 과도선반영
-  else if (totalScore <= -3 && overPriced < -0.5) kofrAdvantage = 'yes';         // 인하압력 + 시장 미반영(기준금리 따라 하락)
-  else if (totalScore <= -6)                      kofrAdvantage = 'strong_yes';  // 강한 인하 → KOFR 급락 예상
-  else                                            kofrAdvantage = 'neutral';
+  // ── KOFR FRN 유불리 판단 (핵심 로직) ──────────────────────────
+  // 핵심 원리:
+  // 시장 선반영 횟수(mktPricedHikes) vs 예상 인상 횟수(expectedHikes) 비교
+  //
+  // [인상 압력 국면]
+  // ① 과도 선반영(시장>예상): 실제 인상이 예상보다 적으면 인상 후 시장금리 하락
+  //    → 1년 고정금리채는 이미 높은 금리로 확정 → 조달비용 불리
+  //    → KOFR FRN: 기준금리만큼만 오름 → 조달비용 유리
+  // ② 미반영(시장<예상): 시장금리가 추가 상승 여지 있음
+  //    → 지금 1년 고정금리채 확정이 유리
+  //    → KOFR FRN: 기준금리 오를수록 조달비용 상승 → 불리
+  //
+  // [인하 압력 국면]
+  // ③ KOFR FRN: 기준금리 인하 시 자동으로 조달비용 감소 → 유리
+  // ④ 고정금리채: 인하 전 확정하면 상대적으로 비싼 조달
+
+  let kofrAdvantage; // 'strong_yes'(KOFR FRN 적극 유리) / 'yes'(유리) / 'neutral'(중립) / 'no'(불리) / 'strong_no'(적극 불리)
+
+  if (totalScore >= 3) {
+    // 인상 압력 국면
+    if      (overPriced >= 2.0) kofrAdvantage = 'strong_yes'; // 시장 2회+ 과도 선반영 → KOFR FRN 매우 유리
+    else if (overPriced >= 0.5) kofrAdvantage = 'yes';        // 시장 0.5회+ 과도 선반영 → KOFR FRN 유리
+    else if (overPriced >= -0.5) kofrAdvantage = 'neutral';   // 선반영 수준 적절 → 중립
+    else                         kofrAdvantage = 'no';         // 시장 미반영 → 고정금리 확정 유리
+  } else if (totalScore <= -3) {
+    // 인하 압력 국면: KOFR 하락 예상 → FRN 조달비용 감소 → 유리
+    if   (totalScore <= -6)    kofrAdvantage = 'strong_yes';  // 강한 인하 → KOFR 큰 폭 하락 예상
+    else                       kofrAdvantage = 'yes';          // 인하 우세 → KOFR 소폭 하락 예상
+  } else {
+    // 보합 국면
+    if      (overPriced >= 1.0) kofrAdvantage = 'yes';        // 보합이지만 과도 선반영
+    else if (overPriced <= -1.0) kofrAdvantage = 'no';        // 보합이지만 미반영
+    else                         kofrAdvantage = 'neutral';
+  }
+
+  // ── 시장금리 방향 예측 (과도선반영 × 예상인상 매트릭스) ──────
+  // 발행자 입장에서 핵심: 실제 인상이 몇 회냐에 따라 시장금리가 오르냐 내리냐
+  let mktRateDirection = '불확실';
+  let mktRateReason = '';
+  if (totalScore >= 3) {
+    const gap = overPriced; // 과도선반영 횟수 (양수=과도, 음수=미반영)
+    if      (gap >= 2.0) { mktRateDirection = '하락 가능성 높음';   mktRateReason = `시장이 ${mktPricedHikes}회 선반영했으나 실제 예상은 ${expectedHikes}회. 인상 후 시장금리 하락 가능성 높음.`; }
+    else if (gap >= 0.5) { mktRateDirection = '소폭 하락 가능';     mktRateReason = `시장 선반영(${mktPricedHikes}회)이 예상(${expectedHikes}회)을 다소 초과. 인상 후 시장금리 조정 가능.`; }
+    else if (gap >= -0.5){ mktRateDirection = '소폭 상승 예상';     mktRateReason = `시장 선반영(${mktPricedHikes}회)이 예상(${expectedHikes}회)과 유사. 인상 시 시장금리 소폭 상승.`; }
+    else                 { mktRateDirection = '추가 상승 가능';     mktRateReason = `시장이 아직 ${Math.abs(gap).toFixed(1)}회분 미반영. 실제 인상 시 시장금리 추가 상승 여지.`; }
+  } else if (totalScore <= -3) {
+    mktRateDirection = '하락 예상';
+    mktRateReason = '인하 압력 우세. 기준금리 인하 시 시장금리 동반 하락 예상.';
+  } else {
+    mktRateDirection = '보합 예상';
+    mktRateReason = '뚜렷한 방향성 없음. 시장금리 현 수준 유지 예상.';
+  }
 
   // ── 방향성 판단 ────────────────────────────────────────────────
   if (totalScore <= -6) {
     direction = '🟢🟢 강한 인하'; dirColor = '#3fb950';
-    dirDesc = '조달 전략: KOFR FRN 적극 활용, 단기 변동금리 비중 확대';
+    dirDesc = `조달 전략: 기준금리 인하 예상 → KOFR FRN 조달비용 자동 감소 → KOFR FRN 적극 활용`;
   } else if (totalScore <= -3) {
     direction = '🟢 인하 우세'; dirColor = '#3fb950';
-    dirDesc = '조달 전략: 변동금리 비중 확대, 단·중기 혼합';
+    dirDesc = `조달 전략: 인하 기대 → KOFR FRN 비중 확대, 1년 만기 중심`;
   } else if (totalScore < +3) {
     direction = '⚪ 보합'; dirColor = '#d29922';
-    dirDesc = '조달 전략: 래더링 전략, 고정/변동 균형';
+    dirDesc = `조달 전략: 방향성 불명확 → 1년 고정금리채 + KOFR FRN 균형 배분`;
   } else if (totalScore < +6) {
     direction = '🔴 인상 압력'; dirColor = '#f85149';
-    dirDesc = `조달 전략: 국고채3년-기준금리 +${sp3bp}bp (시장 ${mktPricedHikes}회 선반영 / 예상 인상 ${expectedHikes}회) → 스프레드 선반영 수준 고려 후 결정`;
+    dirDesc = `조달 전략: 시장 ${mktPricedHikes}회 선반영 / 예상 ${expectedHikes}회 → ${mktRateDirection} → ${kofrAdvantage.includes('yes') ? 'KOFR FRN 유리' : '1년 고정금리채 확정 유리'}`;
   } else {
     direction = '🔴🔴 강한 인상 압력'; dirColor = '#f85149';
-    dirDesc = `조달 전략: 국고채3년-기준금리 +${sp3bp}bp (시장 ${mktPricedHikes}회 선반영 / 예상 인상 ${expectedHikes}회) → 스프레드 선반영 수준 고려 후 결정`;
+    dirDesc = `조달 전략: 시장 ${mktPricedHikes}회 선반영 / 예상 ${expectedHikes}회 → ${mktRateDirection} → ${kofrAdvantage.includes('yes') ? 'KOFR FRN 유리' : '1년 고정금리채 확정 유리'}`;
   }
 
   // ── KOFR FRN 유불리에 따른 조달 전략 ────────────────────────
-  const spreadDesc = `국고채3년-기준금리 +${sp3bp}bp (정상 ${NORMAL_SPREAD}bp 대비 +${Math.round(excessSpread)}bp 초과 → 시장 선반영 약 ${mktPricedHikes}회분 / 예상 인상 ${expectedHikes}회 / 과도선반영 ${overPriced > 0 ? '+' : ''}${overPriced}회)`;
+  const spreadDesc = `국고채3년-기준금리 +${sp3bp}bp (정상 ${NORMAL_SPREAD}bp 대비 +${Math.round(excessSpread)}bp 초과 → 시장 선반영 약 ${mktPricedHikes}회분 / 예상 인상 ${expectedHikes}회 / 과도선반영 ${overPriced > 0 ? '+' : ''}${overPriced}회) | 시장금리 전망: ${mktRateDirection}`;
 
   if (kofrAdvantage === 'strong_yes') {
-    procBasis = `${spreadDesc} → 시장이 기준금리 인상을 과도하게 선반영. 실제 인상 시 시장금리 하락 가능. KOFR FRN 적극 유리.`;
-    procTerm  = '중단기(1~2년) KOFR FRN 중심 조달. 기준금리 인상 시점에 시장금리 역방향 하락 가능성을 활용.';
-    procType  = 'KOFR FRN 비중 확대(60~70%). 시장이 인상을 과도 선반영한 상황에서 변동금리가 유리. KOFR는 기준금리 따라 상승하나 현재 시장금리 대비 낮은 수준.';
-    procInst  = 'KOFR FRN 중심 + 일부 고정금리 혼합. 고정금리는 시장금리 추가 상승 시 헤지 목적으로만 소량 활용.';
+    procBasis = `${spreadDesc} → ${mktRateReason} 시장금리 과도 선반영으로 인상 후 전 만기 구간 시장금리 하락 가능. KOFR FRN 조달비용이 유리.`;
+    procTerm  = `[단기 1~2년] 1년 KOFR FRN 적극 활용. 시장이 인상을 과도 선반영하여 1~2년 고정금리채 금리가 이미 높게 형성. KOFR FRN은 실제 기준금리 인상(예상 ${expectedHikes}회)만큼만 비용 발생 → 조달비용 유리.\n[중장기 3~5년] 인상 후 장기시장금리도 하락 가능하므로 지금 3~5년 고정금리채 확정은 상대적으로 비싼 조달. 인상 후 시장금리 하락 시 재발행 검토.`;
+    procType  = 'KOFR FRN 비중 확대(60~70%) + 3~5년 고정금리채 최소화. 과도 선반영 해소 후 시장금리 하락 시 장기 고정금리채 발행 타이밍 재검토.';
+    procInst  = '1년 KOFR FRN 중심 발행. 3~5년 고정금리채는 시장금리 조정(하락) 이후 확정 타이밍 노릴 것.';
   } else if (kofrAdvantage === 'yes') {
-    procBasis = `${spreadDesc} → 시장 선반영이 예상 인상 횟수를 일부 초과. KOFR FRN 비중 확대 유리.`;
-    procTerm  = '단중기(6개월~1.5년) 혼합. KOFR FRN 비중을 높이되 불확실성 대비 고정금리 일부 유지.';
-    procType  = 'KOFR FRN 비중 확대(50~60%). 과도 선반영 구간이나 추가 인상 가능성 존재 → 완전한 변동금리 전환보다 혼합.';
-    procInst  = 'KOFR FRN + 고정금리 금융채 균형. CD는 단기 유동성 목적 한정.';
+    procBasis = `${spreadDesc} → ${mktRateReason} KOFR FRN이 다소 유리하나 불확실성 존재.`;
+    procTerm  = `[단기 1~2년] 1년 KOFR FRN 비중 확대. 과도 선반영으로 KOFR FRN 유리하나 추가 인상 가능성도 있어 1~2년 고정금리채 일부 병행.\n[중장기 3~5년] 장기시장금리도 인상 후 조정 가능. 3~5년 고정금리채 발행 서두르지 않고 시장 방향 확인 후 결정.`;
+    procType  = 'KOFR FRN 50~60% + 1~2년 고정금리채 40~50%. 3~5년 고정금리채는 시장금리 추이 확인 후 비중 조정.';
+    procInst  = '1년 KOFR FRN + 1~2년 고정금리채 균형. 시장금리 추이 모니터링하며 3~5년 발행 시기 결정.';
   } else if (kofrAdvantage === 'neutral') {
-    procBasis = `${spreadDesc} → 시장 선반영 수준이 예상 인상 횟수와 유사. 방향성 불명확.`;
-    procTerm  = '래더링(Laddering) 전략 권고. 6개월~2년 만기를 분산하여 롤오버 리스크 최소화.';
-    procType  = '고정금리 50% + KOFR FRN 50% 균형. 선반영 수준과 예상 인상 횟수가 유사 → 분산이 최선.';
-    procInst  = '금융채(고정) + KOFR FRN + CD 균형 배분. 특정 수단 집중 지양.';
+    procBasis = `${spreadDesc} → ${mktRateReason} 고정금리채와 KOFR FRN 조달비용 차이 미미.`;
+    procTerm  = `[단기 1~2년] 1년 KOFR FRN + 1~2년 고정금리채 균형 발행. 선반영 수준과 예상 인상 횟수가 유사하여 어느 쪽이 압도적으로 유리하지 않음.\n[중장기 3~5년] 3~5년 고정금리채 분산 발행. 시장금리 방향성 불명확 시 일부 확정하여 롤오버 리스크 분산.`;
+    procType  = '1~2년 고정금리채 50% + KOFR FRN 50% 균형. 3~5년은 소량 분산 발행으로 롤오버 리스크 관리.';
+    procInst  = '1년 KOFR FRN + 1~2년 고정금리채 균등 배분. 3~5년 고정금리채 일부 병행하여 만기 분산.';
   } else if (kofrAdvantage === 'no') {
-    procBasis = `${spreadDesc} → 시장 미반영 또는 인하 국면 과도 선반영. 고정금리 선제 확정 유리.`;
-    procTerm  = '중장기(1~2년) 고정금리 비중 확대. 시장금리 추가 상승 전 확정 유리. 단기 롤오버 최소화.';
-    procType  = '고정금리 금융채 비중 확대(60~70%). KOFR FRN은 스프레드 메리트 확인 후 신중 검토.';
-    procInst  = '고정금리 금융채 중심. CD는 단기 유동성 목적 한정.';
+    procBasis = `${spreadDesc} → ${mktRateReason} 시장 미반영으로 시장금리 추가 상승 가능. 고정금리 선제 확정 유리.`;
+    procTerm  = `[단기 1~2년] 1~2년 고정금리채 비중 확대. 시장금리 추가 상승 전 현재 수준 확정이 유리. KOFR FRN은 기준금리 상승 시 조달비용 동반 상승 → 비중 축소.\n[중장기 3~5년] 3~5년 고정금리채 선제 발행. 시장금리 추가 상승 전 장기물 확정으로 조달비용 고정.`;
+    procType  = '1~2년 고정금리채 60~70% + KOFR FRN 30~40%. 3~5년 고정금리채 추가 발행으로 장기 조달비용 선제 확정.';
+    procInst  = '고정금리채 중심(1~5년 전 구간). 시장금리 추가 상승 전 다양한 만기 구간 확정 발행 권고.';
   } else { // strong_no
-    procBasis = `${spreadDesc} → 시장 미반영 상태에서 강한 인상 압력. 지금 고정금리 확정이 최우선.`;
-    procTerm  = '장기(2년 이상) 고정금리 조달로 현재 수준 확정. 단기 롤오버는 금리 상승 리스크 직접 노출.';
-    procType  = '고정금리 최우선. KOFR FRN은 발행 자제. 시장금리 추가 상승 가능성 높음.';
-    procInst  = '장기 고정금리 금융채 중심. CD 최소화. KOFR FRN 발행 축소.';
+    procBasis = `${spreadDesc} → ${mktRateReason} 시장 미반영 상태에서 강한 인상 압력. 전 만기 고정금리 선제 확정 최우선.`;
+    procTerm  = `[단기 1~2년] 1~2년 고정금리채 집중 발행. 시장금리 추가 상승 여지 크므로 지금 확정이 최선. KOFR FRN 최소화.\n[중장기 3~5년] 3~5년 고정금리채 즉시 발행 권고. 인상 압력이 강하고 시장 미반영 상태 → 지금 장기 확정이 조달비용 절감 최대.`;
+    procType  = '전 만기 고정금리채 최우선. KOFR FRN 발행 최소화. 기준금리 인상이 예상을 상회하면 KOFR FRN 조달비용 급등 위험.';
+    procInst  = '1~5년 고정금리채 집중 발행. KOFR FRN은 인상 사이클 종료 후 재검토.';
   }
 
   // ── 렌더링 ─────────────────────────────────────────────────────
@@ -3307,26 +3352,31 @@ function renderScenarios(pred, totalScore) {
       </div>
     </div>`;
 
+  // 시장금리 방향 재계산 (시나리오용)
+  const _overP = Math.round((mktPricedHikes - expectedHikes) * 10) / 10;
+
   const scenarios = [
     {
       name:      `기준금리 인하 (-25bp → ${(base-0.25).toFixed(2)}%)`,
       prob:      `${pCut}%`, probColor: cutColor,
       kofrLabel: kofrCut, style: 'mild',
-      strategy:  `인하 시 KOFR 동반 하락 예상. 인하 전 고정금리 선제 확정 후, 인하 이후에는 KOFR FRN 비중 확대 전환 검토. CD 단기 활용 병행.`
+      strategy:  `인하 시 KOFR 기준금리 따라 -25bp 하락 예상 → KOFR FRN 조달비용 자동 감소. 1년 고정금리채보다 KOFR FRN이 조달비용 면에서 유리. 인하 직전 1년 KOFR FRN 적극 발행 권고.`
     },
     {
       name:      `기준금리 동결 (현행 ${base.toFixed(2)}% 유지)`,
       prob:      `${pHold}%`, probColor: holdColor,
       kofrLabel: kofrHold, style: 'neutral',
       strategy:  totalScore >= 3
-        ? `고금리 유지 환경. 고정금리 조달 비중 확대 기회 활용. KOFR FRN은 스프레드 메리트 확인 후 선별 발행.`
-        : `현 조달 믹스 유지. 시장 스프레드 변동 모니터링하며 기회 발생 시 장기 고정금리 확정.`
+        ? `동결 시 시장금리는 과도 선반영 해소로 소폭 하락 가능. 1년 고정금리채는 지금 발행 시 상대적으로 높은 금리로 확정. 1년 KOFR FRN 비중 유지 권고.`
+        : `동결 시 1년 고정금리채와 KOFR FRN 조달비용 차이 미미. 현 조달 믹스 유지하며 시장금리 방향 모니터링.`
     },
     {
       name:      `기준금리 인상 (+25bp → ${(base+0.25).toFixed(2)}%)`,
       prob:      `${pHike}%`, probColor: hikeColor,
       kofrLabel: kofrHike, style: 'deep',
-      strategy:  `인상 전 고정금리 조달 선제 확정 필수. KOFR FRN 발행 최소화. 장기 고정금융채 비중 최대화하여 조달비용 상승 헤지.`
+      strategy:  _overP >= 0.5
+        ? `인상 시 시장금리는 과도 선반영 해소로 하락 가능(시장 ${mktPricedHikes}회 선반영 vs 예상 ${expectedHikes}회). KOFR는 +25bp 상승. 1년 고정금리채는 이미 높은 수준이므로 인상 후 시장금리 하락 시 상대적 손해. 1년 KOFR FRN이 조달비용 유리.`
+        : `인상 시 KOFR +25bp 상승, 시장금리도 추가 상승 가능(시장 ${mktPricedHikes}회 선반영 vs 예상 ${expectedHikes}회, 미반영 잔여). 지금 1년 고정금리채 확정이 KOFR FRN보다 조달비용 유리.`
     },
   ];
 
@@ -3662,7 +3712,10 @@ async function runClaudeAnalysis() {
 
   try {
     // GAS는 GET으로 호출 (CORS 우회)
-    const encodedParams = encodeURIComponent(JSON.stringify(params));
+    // kofrAdvantage 정보도 함께 전달해서 Claude AI와 룰베이스 일관성 확보
+    const kofrAdv = forecastPred.kofrAdvantage || 'neutral';
+    const mktDir  = forecastPred.mktRateDirection || '불확실';
+    const encodedParams = encodeURIComponent(JSON.stringify({...params, kofrAdvantage: kofrAdv, mktRateDirection: mktDir}));
     const resp = await fetch(gasUrl + '?action=claude_analysis&params=' + encodedParams);
     const data = await resp.json();
     const raw  = data.result || '';
