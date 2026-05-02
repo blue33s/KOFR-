@@ -521,7 +521,7 @@
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
           <input type="text" id="gasUrl"
-            value="https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec"
+            value="https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec"
             placeholder="https://script.google.com/macros/s/XXXXX/exec"
             style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;
                    color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;outline:none;">
@@ -1820,7 +1820,7 @@ function loadGasUrl() {
 }
 
 async function fetchFromGas(silent = false) {
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const url = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
   if (!url) {
     if (!silent) showStatus('GAS 웹앱 URL을 먼저 저장하세요.', 'err');
@@ -1904,7 +1904,7 @@ async function loadChartData() {
   setChartStatus('loading', '최신 데이터 로드 중...');
 
   // GAS에서 최신 KOFR 데이터 먼저 로드
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
 
   try {
@@ -2111,7 +2111,7 @@ function spreadClass(v) {
 }
 
 async function loadDashboard() {
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
 
   if (!gasUrl) {
@@ -2247,7 +2247,7 @@ function loadBankApiKey() {
 }
 
 async function loadBankDashboard() {
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
   const apiKey = (function(){ try { return localStorage.getItem('bank_api_key') || document.getElementById('bankApiKey').value.trim(); } catch(e) { return document.getElementById('bankApiKey').value.trim(); } })();
 
@@ -2457,7 +2457,7 @@ function setBondStatus(state, msg) {
 async function loadBondDashboard() {
   setBondStatus('loading', '채권 발행내역 로드 중...');
   
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
 
   try {
@@ -2745,7 +2745,7 @@ async function loadForecast() {
   forecastLoaded = true;
   setForecastStatus('loading', '금리 데이터 수집 중...');
 
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
 
   try {
@@ -3617,7 +3617,7 @@ async function runClaudeAnalysis() {
   const btn = document.getElementById('claudeBtn');
   if (btn) { btn.textContent = '⏳ 분석 중...'; btn.disabled = true; }
 
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   const gasUrl = (() => { try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
 
   // 현재 룰베이스 점수 가져오기
@@ -3722,7 +3722,7 @@ window.addEventListener('load', async () => {
   loadKeys();
   loadBankApiKey();
   // GAS URL 로컬 저장 시도 (차단돼도 기본값으로 동작)
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycbyOcXbwdqWEVVjfAL8jT0VSX4V3rKDVQGUVhw7l8C_zjS63mjHNhtxG6DSvVhRGyI1v/exec';
+  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   try {
     if (!localStorage.getItem('kofr_gas_url')) {
       localStorage.setItem('kofr_gas_url', GAS_URL_DEFAULT);
