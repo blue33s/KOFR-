@@ -3661,11 +3661,9 @@ async function runClaudeAnalysis() {
   };
 
   try {
-    const resp = await fetch(gasUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'claude_analysis', params })
-    });
+    // GAS는 GET으로 호출 (CORS 우회)
+    const encodedParams = encodeURIComponent(JSON.stringify(params));
+    const resp = await fetch(gasUrl + '?action=claude_analysis&params=' + encodedParams);
     const data = await resp.json();
     const raw  = data.result || '';
 
