@@ -496,7 +496,6 @@
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('calc')">📊 금리계산기</button>
     <button class="tab-btn" onclick="switchTab('market')">📉 KOFR 추이 · 금리 대시보드</button>
-    <button class="tab-btn" onclick="switchTab('bank')">🏦 은행 경영지표</button>
     <button class="tab-btn" onclick="switchTab('bond')">📋 채권 발행내역</button>
     <button class="tab-btn" onclick="switchTab('forecast')">🔮 금리 예측 · 조달 대응</button>
 
@@ -850,100 +849,6 @@
     </div>
 
   </div><!-- /tab-market -->
-
-  <!-- 탭: 은행 경영지표 대시보드 -->
-  <div id="tab-bank" class="tab-content">
-
-    <!-- 헤더 -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:8px;">
-      <div>
-        <div style="font-size:15px;font-weight:700;color:var(--text);">🏦 은행별 주요 경영지표 비교</div>
-        <div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-top:3px;">iM뱅크 vs 시중은행 vs 지역은행 · 공공데이터포털 금융통계국내은행정보</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-        <select id="bankYear" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
-          <option value="2024">2024년</option>
-          <option value="2023">2023년</option>
-          <option value="2022">2022년</option>
-        </select>
-        <select id="bankQuarter" style="background:var(--surface2);border:1px solid var(--border2);color:var(--text2);font-family:var(--mono);font-size:11px;padding:4px 8px;border-radius:4px;outline:none;">
-          <option value="12">연간(12월)</option>
-          <option value="09">3분기(9월)</option>
-          <option value="06">반기(6월)</option>
-          <option value="03">1분기(3월)</option>
-        </select>
-        <button class="refresh-btn" onclick="loadBankDashboard()">↻ 조회</button>
-      </div>
-    </div>
-
-    <!-- 상태바 -->
-    <div class="dash-status" style="margin-bottom:16px;">
-      <div class="dash-dot" id="bankDot"></div>
-      <span id="bankStatusText">공공데이터포털 API 키 설정 후 조회 가능합니다</span>
-    </div>
-
-    <!-- API 키 입력 -->
-    <div id="bankApiKeyPanel" style="background:rgba(0,180,216,0.05);border:1px solid rgba(0,180,216,0.2);border-radius:8px;padding:14px 16px;margin-bottom:20px;">
-      <div style="font-size:11px;font-weight:600;color:var(--text2);font-family:var(--mono);margin-bottom:8px;">🔑 공공데이터포털 API 키 (기존 보유키 사용 가능)</div>
-      <div style="display:flex;gap:8px;">
-        <input type="password" id="bankApiKey" placeholder="공공데이터포털 디코딩 키 입력"
-          style="flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:6px;color:var(--text);font-family:var(--mono);font-size:12px;padding:7px 10px;outline:none;">
-        <button class="update-btn" onclick="saveBankApiKey()" style="white-space:nowrap;">저장</button>
-        <button class="update-btn" onclick="loadBankDashboard()" style="white-space:nowrap;background:linear-gradient(135deg,#3fb950,#238636);">조회</button>
-      </div>
-    </div>
-
-    <!-- iM뱅크 강조 카드 -->
-    <div style="margin-bottom:20px;">
-      <div class="section-title">📌 iM뱅크 주요지표</div>
-      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;" id="imBankCards">
-        <div class="rate-card"><div class="rate-card-label">ROA</div><div class="rate-card-value highlight" id="im-roa">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--accent)"></div></div>
-        <div class="rate-card"><div class="rate-card-label">ROE</div><div class="rate-card-value highlight" id="im-roe">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--accent)"></div></div>
-        <div class="rate-card"><div class="rate-card-label">NIM</div><div class="rate-card-value" id="im-nim">--</div><div class="rate-card-date">수익성</div><div class="rate-card-accent" style="background:var(--green)"></div></div>
-        <div class="rate-card"><div class="rate-card-label">BIS비율</div><div class="rate-card-value" id="im-bis">--</div><div class="rate-card-date">건전성</div><div class="rate-card-accent" style="background:var(--yellow)"></div></div>
-        <div class="rate-card"><div class="rate-card-label">고정이하여신비율</div><div class="rate-card-value" id="im-npl">--</div><div class="rate-card-date">건전성</div><div class="rate-card-accent" style="background:var(--red)"></div></div>
-        <div class="rate-card"><div class="rate-card-label">총자산</div><div class="rate-card-value" id="im-asset" style="font-size:16px;">--</div><div class="rate-card-date">규모</div><div class="rate-card-accent" style="background:#6e7681"></div></div>
-      </div>
-    </div>
-
-    <!-- 비교 탭 -->
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap;">
-      <button class="period-btn active" id="cmpBtn-roa" onclick="showBankMetric('roa')">ROA</button>
-      <button class="period-btn" id="cmpBtn-roe" onclick="showBankMetric('roe')">ROE</button>
-      <button class="period-btn" id="cmpBtn-nim" onclick="showBankMetric('nim')">NIM</button>
-      <button class="period-btn" id="cmpBtn-bis" onclick="showBankMetric('bis')">BIS비율</button>
-      <button class="period-btn" id="cmpBtn-npl" onclick="showBankMetric('npl')">고정이하여신비율</button>
-      <button class="period-btn" id="cmpBtn-asset" onclick="showBankMetric('asset')">총자산</button>
-    </div>
-
-    <!-- 비교 차트 -->
-    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px;">
-      <canvas id="bankChart" style="width:100%;height:300px;"></canvas>
-    </div>
-
-    <!-- 전체 비교 테이블 -->
-    <div class="section-title">은행별 전체 지표 비교</div>
-    <div style="overflow-x:auto;">
-      <table style="width:100%;border-collapse:collapse;min-width:700px;">
-        <thead>
-          <tr style="background:var(--surface2);">
-            <th style="padding:10px 14px;text-align:left;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">은행</th>
-            <th style="padding:10px 14px;text-align:center;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">구분</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">ROA(%)</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">ROE(%)</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">NIM(%)</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">BIS(%)</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">고정이하(%)</th>
-            <th style="padding:10px 14px;text-align:right;font-size:11px;font-family:var(--mono);color:var(--text2);border-bottom:1px solid var(--border);">총자산(조)</th>
-          </tr>
-        </thead>
-        <tbody id="bankTableBody">
-          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:30px;font-family:var(--mono);font-size:12px;">조회 버튼을 클릭하세요</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-  </div><!-- /tab-bank -->
 
   <!-- 탭: 채권 발행내역 대시보드 -->
   <div id="tab-bond" class="tab-content">
@@ -1882,7 +1787,6 @@ function switchTab(tab) {
   document.getElementById('tab-' + tab).classList.add('active');
   event.target.classList.add('active');
   if (tab === 'market')   { loadChartData(); loadDashboard(); }
-  if (tab === 'bank')     loadBankDashboard();
   if (tab === 'bond')     loadBondDashboard();
   if (tab === 'forecast') loadForecast();
 
@@ -2197,227 +2101,6 @@ async function loadDashboard() {
 }
 
 
-// ─── 은행 경영지표 대시보드 ──────────────────────────────────────────────────
-
-const BANKS = [
-  { name: 'iM뱅크',   key: 'iM뱅크',    group: 'im',     color: '#00b4d8' },
-  { name: '하나',     key: '하나은행',   group: 'big4',   color: '#3fb950' },
-  { name: '신한',     key: '신한은행',   group: 'big4',   color: '#d29922' },
-  { name: '국민',     key: '국민은행',   group: 'big4',   color: '#f85149' },
-  { name: '우리',     key: '우리은행',   group: 'big4',   color: '#a371f7' },
-  { name: 'BNK부산',  key: 'BNK부산은행',group: 'local',  color: '#79c0ff' },
-  { name: '전북',     key: '전북은행',   group: 'local',  color: '#56d364' },
-  { name: '광주',     key: '광주은행',   group: 'local',  color: '#e3b341' },
-  { name: 'BNK경남',  key: 'BNK경남은행',group: 'local',  color: '#ff7b72' },
-];
-
-let bankData = {};
-let bankChartInstance = null;
-let currentMetric = 'roa';
-
-const METRIC_INFO = {
-  roa:   { label: 'ROA (%)',          field: 'roa',   unit: '%', desc: '총자산순이익률' },
-  roe:   { label: 'ROE (%)',          field: 'roe',   unit: '%', desc: '자기자본순이익률' },
-  nim:   { label: 'NIM (%)',          field: 'nim',   unit: '%', desc: '순이자마진' },
-  bis:   { label: 'BIS 자기자본비율(%)', field: 'bis', unit: '%', desc: 'BIS 자기자본비율' },
-  npl:   { label: '고정이하여신비율(%)', field: 'npl', unit: '%', desc: '고정이하여신비율' },
-  asset: { label: '총자산 (조원)',     field: 'asset', unit: '조', desc: '총자산' },
-};
-
-function setBankStatus(state, msg) {
-  const dot  = document.getElementById('bankDot');
-  const text = document.getElementById('bankStatusText');
-  if (dot)  dot.className  = 'dash-dot ' + state;
-  if (text) text.textContent = msg;
-}
-
-function saveBankApiKey() {
-  const key = document.getElementById('bankApiKey').value.trim();
-  if (!key) return;
-  try { localStorage.setItem('bank_api_key', key); } catch(e) {}
-  setBankStatus('ok', 'API 키 저장 완료');
-}
-
-function loadBankApiKey() {
-  try {
-    const k = localStorage.getItem('bank_api_key');
-    if (k) document.getElementById('bankApiKey').value = k;
-    return k;
-  } catch(e) { return null; }
-}
-
-async function loadBankDashboard() {
-  const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
-  const gasUrl = (function(){ try { return localStorage.getItem('kofr_gas_url') || GAS_URL_DEFAULT; } catch(e) { return GAS_URL_DEFAULT; } })();
-  const apiKey = (function(){ try { return localStorage.getItem('bank_api_key') || document.getElementById('bankApiKey').value.trim(); } catch(e) { return document.getElementById('bankApiKey').value.trim(); } })();
-
-  if (!apiKey) {
-    setBankStatus('err', 'API 키를 입력하고 저장해주세요.');
-    return;
-  }
-
-  const year    = document.getElementById('bankYear').value;
-  const quarter = document.getElementById('bankQuarter').value;
-  const baseYm  = year + quarter;
-
-  setBankStatus('loading', `${year}년 ${quarter}월 데이터 조회 중...`);
-  bankData = {};
-
-  try {
-    // GAS를 통해 은행별 경영지표 조회
-    const url = `${gasUrl}?action=bank&ym=${baseYm}&apiKey=${encodeURIComponent(apiKey)}`;
-    const resp = await fetch(url);
-    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
-    const json = await resp.json();
-
-    if (json.error) throw new Error(json.error);
-    if (!json.banks || Object.keys(json.banks).length === 0) {
-      throw new Error('데이터가 없습니다. API 키 또는 조회 기간을 확인하세요.');
-    }
-
-    bankData = json.banks;
-    renderBankDashboard();
-    setBankStatus('ok', `${year}년 ${quarter}월 기준 · ${Object.keys(bankData).length}개 은행 조회 완료`);
-
-  } catch(e) {
-    setBankStatus('err', `오류: ${e.message}`);
-    console.error('Bank API error:', e);
-  }
-}
-
-function renderBankDashboard() {
-  // iM뱅크 카드 업데이트
-  const im = bankData['iM뱅크'];
-  if (im) {
-    const fmt = (v, u) => v != null ? v.toFixed(2) + u : '--';
-    document.getElementById('im-roa').textContent   = fmt(im.roa, '%');
-    document.getElementById('im-roe').textContent   = fmt(im.roe, '%');
-    document.getElementById('im-nim').textContent   = fmt(im.nim, '%');
-    document.getElementById('im-bis').textContent   = fmt(im.bis, '%');
-    document.getElementById('im-npl').textContent   = fmt(im.npl, '%');
-    document.getElementById('im-asset').textContent = im.asset != null ? (im.asset / 10000).toFixed(1) + '조' : '--';
-  }
-
-  // 비교 차트
-  showBankMetric(currentMetric);
-
-  // 전체 비교 테이블
-  renderBankTable();
-}
-
-function showBankMetric(metric) {
-  currentMetric = metric;
-  document.querySelectorAll('[id^="cmpBtn-"]').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('cmpBtn-' + metric);
-  if (btn) btn.classList.add('active');
-
-  const info   = METRIC_INFO[metric];
-  const labels = BANKS.map(b => b.name);
-  const values = BANKS.map(b => {
-    const d = bankData[b.key];
-    if (!d || d[metric] == null) return null;
-    return metric === 'asset' ? Math.round(d[metric] / 1000) / 10 : d[metric];
-  });
-  const colors = BANKS.map(b => b.color);
-
-  if (bankChartInstance) { bankChartInstance.destroy(); bankChartInstance = null; }
-
-  const canvas = document.getElementById('bankChart');
-  canvas.height = 300;
-  const ctx = canvas.getContext('2d');
-
-  bankChartInstance = new Chart(ctx, {
-    type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: info.label,
-        data: values,
-        backgroundColor: colors.map((c, i) => BANKS[i].key === 'iM뱅크' ? c : c + '99'),
-        borderColor: colors,
-        borderWidth: BANKS.map(b => b.key === 'iM뱅크' ? 2 : 1),
-        borderRadius: 4,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: '#161b22',
-          borderColor: '#30363d',
-          borderWidth: 1,
-          titleColor: '#8b949e',
-          bodyColor: '#e6edf3',
-          titleFont: { family: 'IBM Plex Mono', size: 11 },
-          bodyFont:  { family: 'IBM Plex Mono', size: 13 },
-          callbacks: {
-            label: item => ` ${info.label}: ${item.raw != null ? item.raw + info.unit : '-'}`
-          }
-        }
-      },
-      scales: {
-        x: {
-          grid:  { display: false },
-          ticks: { color: '#8b949e', font: { family: 'IBM Plex Mono', size: 11 } }
-        },
-        y: {
-          grid:  { color: 'rgba(48,54,61,0.5)' },
-          ticks: { color: '#6e7681', font: { family: 'IBM Plex Mono', size: 10 },
-                   callback: v => v + info.unit }
-        }
-      }
-    }
-  });
-}
-
-function renderBankTable() {
-  const groupLabel = { im: '★ iM뱅크', big4: '시중은행', local: '지역은행' };
-  const tbody = document.getElementById('bankTableBody');
-
-  const rows = BANKS.map(b => {
-    const d = bankData[b.key];
-    const isIM = b.key === 'iM뱅크';
-    const fmt = (v, dec=2) => v != null ? v.toFixed(dec) : '-';
-    const assetTri = d?.asset != null ? (d.asset / 10000).toFixed(1) : '-';
-
-    // iM뱅크 vs 지역은행 평균 비교 색상
-    const localBanks = BANKS.filter(x => x.group === 'local' && x.key !== 'iM뱅크');
-    const avgLocal = (field) => {
-      const vals = localBanks.map(x => bankData[x.key]?.[field]).filter(v => v != null);
-      return vals.length ? vals.reduce((a,b)=>a+b,0)/vals.length : null;
-    };
-
-    const roaColor = isIM && d?.roa != null && avgLocal('roa') != null
-      ? (d.roa >= avgLocal('roa') ? 'var(--green)' : 'var(--red)') : 'var(--text)';
-
-    return `<tr style="${isIM ? 'background:rgba(0,180,216,0.06);' : ''}">
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 color:${isIM ? 'var(--accent)' : 'var(--text)'};font-weight:${isIM ? '700' : '400'};">
-        ${isIM ? '★ ' : ''}${b.name}
-      </td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:11px;border-bottom:1px solid var(--border);
-                 text-align:center;color:var(--text3);">
-        ${b.group === 'im' ? 'iM뱅크' : b.group === 'big4' ? '시중' : '지역'}
-      </td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;color:${roaColor};">${fmt(d?.roa)}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;">${fmt(d?.roe)}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;">${fmt(d?.nim)}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;">${fmt(d?.bis)}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;">${fmt(d?.npl)}</td>
-      <td style="padding:9px 14px;font-family:var(--mono);font-size:12px;border-bottom:1px solid var(--border);
-                 text-align:right;">${assetTri}</td>
-    </tr>`;
-  }).join('');
-
-  tbody.innerHTML = rows || '<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:20px;">데이터 없음</td></tr>';
-}
 
 
 // ─── 채권 발행내역 대시보드 ──────────────────────────────────────────────────
@@ -3352,8 +3035,22 @@ function renderScenarios(pred, totalScore) {
       </div>
     </div>`;
 
-  // 시장금리 방향 재계산 (시나리오용)
-  const _overP = Math.round((mktPricedHikes - expectedHikes) * 10) / 10;
+  // 시장금리 방향 재계산 (시나리오용) - pred에서 직접 계산
+  const NORMAL_SP = 27.5;
+  const HIKE_UNIT_SC = 25;
+  const _sp3bp = Math.round(pred.sp_gb3_base * 100);
+  const _excess = Math.max(0, _sp3bp - NORMAL_SP);
+  const _mktHikes = Math.round(_excess / HIKE_UNIT_SC * 10) / 10;
+  const _spreadAdj = pred.spreadAdj || 0;
+  let _pH2 = 0.15;
+  if      (_spreadAdj >= 0.05)  _pH2 = 0.75;
+  else if (_spreadAdj >= 0.03)  _pH2 = 0.55;
+  else if (_spreadAdj >= 0.01)  _pH2 = 0.30;
+  else if (_spreadAdj > -0.01)  _pH2 = 0.15;
+  else if (_spreadAdj >= -0.03) _pH2 = 0.05;
+  else                          _pH2 = 0.03;
+  const _expHikes = Math.round(_pH2 * 1.5 * 10) / 10;
+  const _overP = Math.round((_mktHikes - _expHikes) * 10) / 10;
 
   const scenarios = [
     {
@@ -3375,8 +3072,8 @@ function renderScenarios(pred, totalScore) {
       prob:      `${pHike}%`, probColor: hikeColor,
       kofrLabel: kofrHike, style: 'deep',
       strategy:  _overP >= 0.5
-        ? `인상 시 시장금리는 과도 선반영 해소로 하락 가능(시장 ${mktPricedHikes}회 선반영 vs 예상 ${expectedHikes}회). KOFR는 +25bp 상승. 1년 고정금리채는 이미 높은 수준이므로 인상 후 시장금리 하락 시 상대적 손해. 1년 KOFR FRN이 조달비용 유리.`
-        : `인상 시 KOFR +25bp 상승, 시장금리도 추가 상승 가능(시장 ${mktPricedHikes}회 선반영 vs 예상 ${expectedHikes}회, 미반영 잔여). 지금 1년 고정금리채 확정이 KOFR FRN보다 조달비용 유리.`
+        ? `인상 시 시장금리는 과도 선반영 해소로 하락 가능(시장 ${_mktHikes}회 선반영 vs 예상 ${_expHikes}회). KOFR는 +25bp 상승. 1년 고정금리채는 이미 높은 수준이므로 인상 후 시장금리 하락 시 상대적 손해. 1년 KOFR FRN이 조달비용 유리.`
+        : `인상 시 KOFR +25bp 상승, 시장금리도 추가 상승 가능(시장 ${_mktHikes}회 선반영 vs 예상 ${_expHikes}회, 미반영 잔여). 지금 1년 고정금리채 확정이 KOFR FRN보다 조달비용 유리.`
     },
   ];
 
@@ -3773,7 +3470,6 @@ function refreshForecast() {
 
 window.addEventListener('load', async () => {
   loadKeys();
-  loadBankApiKey();
   // GAS URL 로컬 저장 시도 (차단돼도 기본값으로 동작)
   const GAS_URL_DEFAULT = 'https://script.google.com/macros/s/AKfycby-RBQ216P9cu5JDCsp4A03Veo0jQG4Kzl5EyfEWyNjqs5Pi3-AaG_SFDBhQDDrZec3/exec';
   try {
